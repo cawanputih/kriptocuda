@@ -94,7 +94,7 @@ cudaError_t enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *r
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("\nDurasi enkripsi= %f ms\n", milliseconds);
+	printf("Durasi enkripsi= %f ms\n", milliseconds);
 
 	cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess) {
@@ -150,7 +150,7 @@ cudaError_t dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("\nDurasi enkripsi= %f ms\n", milliseconds);
+	printf("Durasi dekripsi= %f ms\n", milliseconds);
 
 	cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess) {
@@ -201,13 +201,13 @@ int main(){
 	modexp(g,x,p,&y);
 	initenkripsi(m, k);
 
-	printf("<<<<<<<<<<<<<<Pesan Asli>>>>>>>>>>>>>>>\n");
-	for (int i = 0; i < 4; i++) {
-		printf("m[%d] = %lu\n", i, m[i]);
-	}
+	// printf("<<<<<<<<<<<<<<Pesan Asli>>>>>>>>>>>>>>>\n");
+	// for (int i = 0; i < 4; i++) {
+	// 	printf("m[%d] = %lu\n", i, m[i]);
+	// }
 
-	printf("m[...]\n");
-	printf("m[%d] = %lu\n", banyakdata-1, m[banyakdata-1]);
+	// printf("m[...]\n");
+	// printf("m[%d] = %lu\n", banyakdata-1, m[banyakdata-1]);
 
 	enkripsiCUDA(m,k,g,p,y,res);
 

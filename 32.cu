@@ -97,13 +97,13 @@ int main() {
 	modexp(g, x, p, &y);
 	initenkripsi(m, k);
 
-	printf("<<<<<<<<<<<<<<Pesan Asli>>>>>>>>>>>>>>>\n");
-	for (int i = 0; i < 4; i++) {
-		printf("m[%d] = %lu\n", i, m[i]);
-	}
+	// printf("<<<<<<<<<<<<<<Pesan Asli>>>>>>>>>>>>>>>\n");
+	// for (int i = 0; i < 4; i++) {
+	// 	printf("m[%d] = %lu\n", i, m[i]);
+	// }
 
-	printf("m[...]\n");
-	printf("m[%d] = %lu\n", banyakdata - 1, m[banyakdata - 1]);
+	// printf("m[...]\n");
+	// printf("m[%d] = %lu\n", banyakdata - 1, m[banyakdata - 1]);
 
 	enkripsiCUDA(m, k, g, p, y, res);
 
