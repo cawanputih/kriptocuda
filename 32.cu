@@ -9,8 +9,8 @@
 typedef unsigned long ulint;
 typedef unsigned long long ulint64;
 
-int banyakdata = 256;
-int dimensigrid = 2;
+int banyakdata = 256000;
+int dimensigrid = 200;
 int dimensiblok = 128;
 
 void modexp(ulint a, ulint b, ulint c, ulint* res) {
@@ -61,7 +61,7 @@ void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
 	clock_t end = clock();
 
 	double time_spent = (double)(end - begin);
-	printf("Durasi  : %f milliseconds\n", time_spent / 1000);
+	printf("Durasi enkripsi = %f milliseconds\n", time_spent / 1000);
 }
 
 void dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
@@ -70,7 +70,7 @@ void dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 	clock_t end = clock();
 
 	double time_spent = (double)(end - begin);
-	printf("Durasi  : %f milliseconds\n", time_spent / 1000);
+	printf("Durasi dekripsi = %f milliseconds\n", time_spent / 1000);
 }
 
 void initenkripsi(ulint *m, ulint *k) {
