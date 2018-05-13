@@ -62,7 +62,6 @@ void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
 
 	double time_spent = (double)(end - begin);
 	printf("Durasi  : %f milliseconds\n", time_spent / 1000);
-	printf("\n<<<<<<<<<<<<<<HASIL KE CPU>>>>>>>>>>>>>>>\n");
 }
 
 void dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
@@ -72,7 +71,6 @@ void dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 
 	double time_spent = (double)(end - begin);
 	printf("Durasi  : %f milliseconds\n", time_spent / 1000);
-	printf("\n<<<<<<<<<<<<<<HASIL KE CPU>>>>>>>>>>>>>>>\n");
 }
 
 void initenkripsi(ulint *m, ulint *k) {
@@ -84,7 +82,7 @@ void initenkripsi(ulint *m, ulint *k) {
 }
 
 int main() {
-	ulint *m, *k, *res, *res2, g, p, y, x, e, *res3;
+	ulint *m, *k, *res, *res2, g, p, y, x, e;
 
 	m = (ulint*)malloc(banyakdata * sizeof(ulint));
 	k = (ulint*)malloc(banyakdata * sizeof(ulint));
@@ -109,24 +107,24 @@ int main() {
 
 	enkripsiCUDA(m, k, g, p, y, res);
 
-	printf("<<<<<<<<<<<<<<Hasil Enkripsi>>>>>>>>>>>>>>>\n");
-	for (int i = 0; i < 4; i++) {
-		printf("c[%d] = %lu 	c[%d] = %lu\n", 2 * i, res[2 * i], 2 * i + 1, res[2 * i + 1]);
-	}
+	// printf("<<<<<<<<<<<<<<Hasil Enkripsi>>>>>>>>>>>>>>>\n");
+	// for (int i = 0; i < 4; i++) {
+	// 	printf("c[%d] = %lu 	c[%d] = %lu\n", 2 * i, res[2 * i], 2 * i + 1, res[2 * i + 1]);
+	// }
 
-	printf("c ...\n");
-	printf("c[%d] = %lu 	c[%d] = %lu\n", banyakdata * 2 - 2, res[banyakdata * 2 - 2], banyakdata * 2 - 1, res[banyakdata * 2 - 1]);
+	// printf("c ...\n");
+	// printf("c[%d] = %lu 	c[%d] = %lu\n", banyakdata * 2 - 2, res[banyakdata * 2 - 2], banyakdata * 2 - 1, res[banyakdata * 2 - 1]);
 
 	e = p - x - 1;
 	dekripsiCUDA(res, p, e, res2);
 
-	printf("<<<<<<<<<<<<<<Hasil Dekripsi>>>>>>>>>>>>>>>\n");
-	for (int i = 0; i < 4; i++) {
-		printf("m[%d] = %lu\n", i, res2[i]);
-	}
+	// printf("<<<<<<<<<<<<<<Hasil Dekripsi>>>>>>>>>>>>>>>\n");
+	// for (int i = 0; i < 4; i++) {
+	// 	printf("m[%d] = %lu\n", i, res2[i]);
+	// }
 
-	printf("m[...]\n");
-	printf("m[%d] = %lu\n", banyakdata - 1, res2[banyakdata - 1]);
+	// printf("m[...]\n");
+	// printf("m[%d] = %lu\n", banyakdata - 1, res2[banyakdata - 1]);
 
 	free(m);
 	free(k);
