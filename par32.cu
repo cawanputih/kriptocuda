@@ -9,8 +9,8 @@
 typedef unsigned long ulint;
 typedef unsigned long long ulint64;
 
-int banyakdata = 10240;
-int dimensigrid = 80;
+int banyakdata = 256;
+int dimensigrid = 2;
 int dimensiblok = 128;
 
 __host__ __device__ void modexp(ulint a, ulint b, ulint c, ulint* res) {
@@ -177,106 +177,7 @@ cudaError_t dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 
 }
 
-void initenkripsi(ulint *m, ulint *k) {
-	for (int i = 0; i < banyakdata; i++)
-    {
-        m[i] = 0;
-    }
-
-	FILE *file = fopen("plain.plain", "r");
-    char *code;
-    size_t n = 0;
-    int c;
-
-    code = (char*) malloc(9999999);
-    
-    while ((c = fgetc(file)) != EOF)
-    {
-        code[n++] = (char) c;
-    }
-    code[n] = '\0';
-
- 
-    char karakter = code[0];
-
-    int i = 0;
-    int indexpesan = -1;
-    while(karakter != '\0'){
-        karakter = code[i];
-        if(i % 3== 0){
-            indexpesan++;
-            m[indexpesan] += karakter * 1000000;
-        }else if(i % 3 ==1){
-            m[indexpesan] += karakter * 1000;
-        }else{
-            m[indexpesan] += karakter;
-        }
-        i++;
-    }
-
-    // printf("count : %d\n", indexpesan);
-
-    // nilai k //
-	srand(2018);
-
-	for (int i = 0; i < banyakdata; i++) {
-		k[i] = rand() % 3999999978;
-	}
-}
-
-ulint stringtolong(char* s){
-	ulint res = 0;
-	int i = 0;
-	while(s[i] != '\0'){
-		res *= 10;
-		res += s[i] - '0';
-		i++;
-	}
-	return res;
-}
-
-void initdekripsi(ulint *c) {
-	for (int i = 0; i < banyakdata*2; i++)
-	{
-		c[i] = 0;
-	}
-
-	char *buffer = 0;
-	long length;
-	FILE *f = fopen("cipher.cipher", "rb");
-
-	if (f)
-	{
-		fseek(f, 0, SEEK_END);
-		length = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		buffer = (char*)malloc(length);
-		if (buffer) {
-			fread(buffer, 1, length, f);
-		}
-		buffer[length] = '\0';
-		fclose(f);
-	}
-	char delimstrip[2];
-	delimstrip[0] = 45;
-	delimstrip[1] = 0;
-
-	// Baca seluruh ciphertext
-	char *tempsplit;
-	tempsplit = strdup(strtok(buffer, delimstrip));
-	c[0] = stringtolong(tempsplit);
-	tempsplit = strdup(strtok(NULL, delimstrip));
-	c[1] = stringtolong(tempsplit);
-	// Baca m
-	for (int i = 1; i < banyakdata; i++) {
-		tempsplit = strdup(strtok(NULL, delimstrip));
-		c[2*i] = stringtolong(tempsplit);
-		tempsplit = strdup(strtok(NULL, delimstrip));
-		c[2*i+1] = stringtolong(tempsplit);
-	}
-}
-
-void initenkripsi2(ulint *m, ulint *k){
+void initenkripsi(ulint *m, ulint *k){
 	
 	for (int i = 0; i < banyakdata; i++) {
 		m[i] = rand() % 3999999978;
@@ -284,42 +185,13 @@ void initenkripsi2(ulint *m, ulint *k){
 	}	
 }
 
-void writecipher(ulint* c){
-	FILE *fp = fopen("cipher.cipher","w");
-	
-
-	for (int i = 0; i < banyakdata*2; i++)
-	{
-		fprintf(fp, "%lu", c[i]);
-		fprintf(fp, "%c", '-');
-	}
-
-	fclose(fp);
-}
-
-void writedekrip(ulint* m){
-	FILE *fp = fopen("dekrip.dekrip","w");
-	
-
-	for (int i = 0; i < banyakdata; i++)
-	{
-		ulint temp = m[i];
-		fprintf(fp, "%c",  temp/1000000 );
-		fprintf(fp, "%c",  (temp/1000) % 1000 );
-		fprintf(fp, "%c",  temp % 1000);
-	}
-
-	fclose(fp);
-}
-
 int main(){
-	ulint *m, *k, *res, *res2, g, p, y, x, e, *res3;
+	ulint *m, *k, *res, *res2, g, p, y, x, e;
 
 	m = (ulint*)malloc(banyakdata * sizeof(ulint));
 	k = (ulint*)malloc(banyakdata * sizeof(ulint));
 	res = (ulint*)malloc(banyakdata * 2 * sizeof(ulint));
 	res2 = (ulint*)malloc(banyakdata * sizeof(ulint));
-	res3 = (ulint*)malloc(banyakdata * 2 *sizeof(ulint));
 
 	srand(2018);
 
@@ -328,8 +200,6 @@ int main(){
 	x = rand() % 3999999978;
 	modexp(g,x,p,&y);
 	initenkripsi(m, k);
-	// initenkripsi2(m, k);
-
 
 	printf("<<<<<<<<<<<<<<Pesan Asli>>>>>>>>>>>>>>>\n");
 	for (int i = 0; i < 4; i++) {
@@ -349,12 +219,8 @@ int main(){
 	printf("c ...\n");
 	printf("c[%d] = %lu 	c[%d] = %lu\n", banyakdata * 2-2, res[banyakdata * 2-2], banyakdata *2-1,res[banyakdata*2-1]);
 
-	writecipher(res);
-
-	initdekripsi(res3);
-
 	e = p-x-1;
-	dekripsiCUDA(res3,p,e,res2);
+	dekripsiCUDA(res,p,e,res2);
 
 	printf("<<<<<<<<<<<<<<Hasil Dekripsi>>>>>>>>>>>>>>>\n");
 	for (int i = 0; i < 4; i++) {
@@ -363,7 +229,6 @@ int main(){
 
 	printf("m[...]\n");
 	printf("m[%d] = %lu\n", banyakdata-1, res2[banyakdata-1]);
-	writedekrip(res2);
 
 	free(m);
 	free(k);
