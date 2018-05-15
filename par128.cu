@@ -616,16 +616,15 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 
 void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2){
 	// Kunci publik p
+	srand(2018);
+
 	p->size = 4;
 	p->value = (uint*) malloc(p->size * sizeof(uint));
-	for (int i = 0; i < p->size; i++)
+	p->value[0] = UINT_MAX;
+	for (int i = 1; i < p->size; i++)
 	{
-		// p->value[i] = 2357;
-		p->value[i] = UINT_MAX-82;
+		p->value[i] = rand() % UINT_MAX;
 	}
-	// p->value[0] = UINT_MAX-4;
-	// p->value[0] = 2387;
-	// p->value[1] = 2357;
 
 
 	// Kunci publik g
@@ -634,7 +633,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	for (int i = 0; i < g->size; i++)
 	{
 		// g->value[i] = 2;
-		g->value[i] = UINT_MAX-902;
+		g->value[i] = rand() % UINT_MAX;
 	}
 
 	// Kunci privat x
@@ -643,7 +642,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	for (int i = 0; i < x->size; i++)
 	{
 		// x->value[i] = 1751;
-		x->value[i] = UINT_MAX-86262;
+		x->value[i] = rand() % UINT_MAX;
 	}
 
 	// Cari nilai eksponen e = (p-x-1) untuk dekripsi
@@ -674,7 +673,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	for (int i = 0; i < m->size; i++)
 	{
 		// m->value[i] = 1001;
-		m->value[i] = UINT_MAX-5522;
+		m->value[i] = rand() % UINT_MAX;
 	}
 
 	// Nilai k masing-masing blok
@@ -683,7 +682,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	for (int i = 0; i < k->size; i++)
 	{
 		// k->value[i] = 77;
-		k->value[i] = UINT_MAX-38227;
+		k->value[i] = rand() % UINT_MAX;
 	}
 
 	// Alokasi memori untuk result
