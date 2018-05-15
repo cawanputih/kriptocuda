@@ -302,16 +302,16 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 	// Alokasi Memori untuk blok m dan k
 	for (int i = 0; i < banyakdata; i++) {
 		big temp;
-		cudaMalloc((void**)&tempvalue[i], (sizeof(uint) * m[0].size));
-		cudaMemcpy(tempvalue[i], m[0].value, (sizeof(uint) * m[0].size), cudaMemcpyHostToDevice);
-		temp.size = m[0].size;
+		cudaMalloc((void**)&tempvalue[i], (sizeof(uint) * m[i].size));
+		cudaMemcpy(tempvalue[i], m[i].value, (sizeof(uint) * m[i].size), cudaMemcpyHostToDevice);
+		temp.size = m[i].size;
 		temp.value = tempvalue[i];
 		cudaMemcpy((devm + i), &temp, (sizeof(big)), cudaMemcpyHostToDevice);
 
 		big temp2;
-		cudaMalloc((void**)&tempvalue2[i], (sizeof(uint) * k[0].size));
-		cudaMemcpy(tempvalue2[i], k[0].value, (sizeof(uint) * k[0].size), cudaMemcpyHostToDevice);
-		temp2.size = k[0].size;
+		cudaMalloc((void**)&tempvalue2[i], (sizeof(uint) * k[i].size));
+		cudaMemcpy(tempvalue2[i], k[i].value, (sizeof(uint) * k[i].size), cudaMemcpyHostToDevice);
+		temp2.size = k[i].size;
 		temp2.value = tempvalue2[i];
 		cudaMemcpy((devk + i), &temp2, (sizeof(big)), cudaMemcpyHostToDevice);
 
@@ -458,16 +458,16 @@ cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
 	// Alokasi Memori untuk blok m dan k
 	for (int i = 0; i < banyakdata; i++) {
 		big temp11;
-		cudaMalloc((void**)&tempvalue[2*i], (sizeof(uint) * c[0].size));
-		cudaMemcpy(tempvalue[2*i], c[0].value, (sizeof(uint) * c[0].size), cudaMemcpyHostToDevice);
-		temp11.size = c[0].size;
+		cudaMalloc((void**)&tempvalue[2*i], (sizeof(uint) * c[2*i].size));
+		cudaMemcpy(tempvalue[2*i], c[2*i].value, (sizeof(uint) * c[2*i].size), cudaMemcpyHostToDevice);
+		temp11.size = c[2*i].size;
 		temp11.value = tempvalue[2*i];
 		cudaMemcpy((devc + 2*i), &temp11, (sizeof(big)), cudaMemcpyHostToDevice);
 
 		big temp12;
-		cudaMalloc((void**)&tempvalue[2*i+1], (sizeof(uint) * c[1].size));
-		cudaMemcpy(tempvalue[2*i+1], c[1].value, (sizeof(uint) * c[1].size), cudaMemcpyHostToDevice);
-		temp12.size = c[1].size;
+		cudaMalloc((void**)&tempvalue[2*i+1], (sizeof(uint) * c[2*i+1].size));
+		cudaMemcpy(tempvalue[2*i+1], c[2*i+1].value, (sizeof(uint) * c[2*i+1].size), cudaMemcpyHostToDevice);
+		temp12.size = c[2*i+1].size;
 		temp12.value = tempvalue[2*i+1];
 		cudaMemcpy((devc + 2*i+1), &temp12, (sizeof(big)), cudaMemcpyHostToDevice);
 
