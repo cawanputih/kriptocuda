@@ -560,23 +560,23 @@ int main(){
 	printf("Cipher ... : ...\n");
 	printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
 	printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
-	
-	free(p->value);
-	free(p);
-	free(g->value);
-	free(g);
-	free(x->value);
-	free(x);
-	free(e->value);
-	free(e);
-	free(y->value);
-	free(y);
-	free(m->value);
-	free(m);
-	free(k->value);
-	free(k);
-	free(res->value);
-	free(res);
+
+	cudaFree(p->value);
+	cudaFree(p);
+	cudaFree(g->value);
+	cudaFree(g);
+	cudaFree(x->value);
+	cudaFree(x);
+	cudaFree(e->value);
+	cudaFree(e);
+	cudaFree(y->value);
+	cudaFree(y);
+	cudaFree(m->value);
+	cudaFree(m);
+	cudaFree(k->value);
+	cudaFree(k);
+	cudaFree(res->value);
+	cudaFree(res);
 	
 	return 0;
 }
