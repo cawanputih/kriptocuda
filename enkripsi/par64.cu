@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 2560;
-int dimensigrid = 20;
+int banyakdata = 25600;
+int dimensigrid = 200;
 int dimensiblok = 128;
 
 typedef struct {

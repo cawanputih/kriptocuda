@@ -8,15 +8,14 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 256000;
-int dimensigrid = 2000;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
 	char size;
 	uint* value;
 }big;
-
 
 __host__ __device__ short ukuranbit(big *a) {
 	uint lastval = a->value[a->size-1];
@@ -226,7 +225,7 @@ __device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *
 	modulo(mulbuff, p, res+1, minbuff->value);
 }
 
-__global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
+__global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big* minbuff, big *mulbuff){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int jdx = threadIdx.x;
 
@@ -236,7 +235,7 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 	__shared__ big sp;
 	__shared__ big sg;
 	__shared__ big sy;
-	__shared__ uint s[1600];
+	extern __shared__ uint s[];
 
 	uint *sresval = s;
 	uint *spval = (uint*)&sresval[2*128*2];
@@ -269,14 +268,7 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 
 	__syncthreads();
 
-
-	big* minbuff = (big*) malloc(sizeof(big));
-	big* mulbuff = (big*) malloc(sizeof(big));
-
-	minbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-	mulbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-
-	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff + idx, mulbuff + idx);
 
 	res[2*idx].size = sres[2*jdx].size;
 	res[2*idx+1].size = sres[2*jdx+1].size;
@@ -377,15 +369,8 @@ void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 		cudaMemcpy((mulbuff + i), &temp5, (sizeof(big)), cudaMemcpyHostToDevice);
 	}
 
-	// size_t free_byte ;
- //    size_t total_byte ;
- //    cudaMemGetInfo( &free_byte, &total_byte ) ;
-	// double free_db = (double)free_byte ;
- //    double total_db = (double)total_byte ;
- //    double used_db = total_db - free_db ;
 
-
-	kernelenk << <dimensigrid, dimensiblok >> >(devm, devk, devg, devp, devy, devres);
+	kernelenk << <dimensigrid, dimensiblok , 771 * sizeof(uint)>> >(devm, devk, devg, devp, devy, devres, minbuff, mulbuff);
 
 	cudaDeviceSynchronize();
 
@@ -446,13 +431,13 @@ void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y){
 
 	cudaDeviceReset();
 
-	// for (int i = 0; i < 5; i++)
-	// {
-	// 	printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
-	// }
-	// printf("Cipher ... : ...\n");
-	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
-	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
+	for (int i = 0; i < 5; i++)
+	{
+		printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
+	}
+	printf("Cipher ... : ...\n");
+	printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
+	printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
 }
 
 void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
@@ -466,7 +451,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 
 	p->size = 1;
 	p->value = (uint*) malloc(p->size * sizeof(uint));
-	p->value[0] = UINT_MAX;
+	p->value[0] = 2357;
 	for (int i = 1; i < p->size; i++)
 	{
 		p->value[i] = rand() % UINT_MAX;
@@ -478,8 +463,8 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 	g->value = (uint*) malloc(g->size * sizeof(uint));
 	for (int i = 0; i < g->size; i++)
 	{
-		// g->value[i] = 2;
-		g->value[i] = rand() % UINT_MAX;
+		g->value[i] = 2;
+		// g->value[i] = rand() % UINT_MAX;
 	}
 
 	// Kunci privat x
@@ -487,8 +472,8 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
-		// x->value[i] = 1751;
-		x->value[i] = rand() % UINT_MAX;
+		x->value[i] = 1751;
+		// x->value[i] = rand() % UINT_MAX;
 	}
 
 	// Cari nilai eksponen e = (p-x-1) untuk dekripsi
@@ -520,7 +505,8 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 		m[i].value = (uint*) malloc(m[i].size * sizeof(uint));
 		for (int j = 0; j < m[i].size; j++)
 		{
-			m[i].value[j] = rand() % UINT_MAX;
+			m[i].value[j] = 1001;
+			// m[i].value[j] = rand() % UINT_MAX;
 		}
 
 		// Nilai k masing-masing blok
@@ -528,8 +514,8 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 		k[i].value = (uint*) malloc(k[i].size * sizeof(uint));
 		for (int j = 0; j < k[i].size; j++)
 		{
-			// k[i].value[j] = 77;
-			k[i].value[j] = rand() % UINT_MAX;
+			k[i].value[j] = 77;
+			// k[i].value[j] = rand() % UINT_MAX;
 		}
 	}
 
