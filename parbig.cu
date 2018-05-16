@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 1024;
-int dimensigrid = 8;
+int banyakdata = 256000;
+int dimensigrid = 2000;
 int dimensiblok = 128;
 
 typedef struct {
@@ -438,7 +438,7 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 
 void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2){
 	// Kunci publik p
-	p->size = 12;
+	p->size = 2;
 	p->value = (uint*) malloc(p->size * sizeof(uint));
 	for (int i = 0; i < p->size; i++)
 	{
@@ -451,7 +451,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 
 
 	// Kunci publik g
-	g->size = 12;
+	g->size = 2;
 	g->value = (uint*) malloc(g->size * sizeof(uint));
 	for (int i = 0; i < g->size; i++)
 	{
@@ -460,7 +460,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	}
 
 	// Kunci privat x
-	x->size = 12;
+	x->size = 2;
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
@@ -490,7 +490,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	printf("y 0 : %u\n", y->value[1]);
 	//========================================================//
 	// Blok plainteks
-	m->size = 12;
+	m->size = 2;
 	m->value = (uint*) malloc(m->size * sizeof(uint));
 	for (int i = 0; i < m->size; i++)
 	{
@@ -499,7 +499,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	}
 
 	// Nilai k masing-masing blok
-	k->size = 12;
+	k->size = 2;
 	k->value = (uint*) malloc(k->size * sizeof(uint));
 	for (int i = 0; i < k->size; i++)
 	{

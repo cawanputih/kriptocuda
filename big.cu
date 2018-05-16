@@ -147,12 +147,13 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 
 void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2){
 	// Kunci publik p
-	p->size = 12;
+	p->size = 2;
 	p->value = (uint*) malloc(p->size * sizeof(uint));
-	for (int i = 0; i < p->size; i++)
+	p->value[0] = UINT_MAX;
+	for (int i = 1; i < p->size; i++)
 	{
 		//p->value[i] = 2357;
-		p->value[i] = UINT_MAX-82;;
+		p->value[i] = rand() % UINT_MAX;
 	}
 	// p->value[0] = UINT_MAX-4;
 	// p->value[0] = 2387;
@@ -160,21 +161,21 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 
 
 	// Kunci publik g
-	g->size = 12;
+	g->size = 2;
 	g->value = (uint*) malloc(g->size * sizeof(uint));
 	for (int i = 0; i < g->size; i++)
 	{
 		// g->value[i] = 2;
-		g->value[i] = UINT_MAX-902;
+		g->value[i] = rand() % UINT_MAX;
 	}
 
 	// Kunci privat x
-	x->size = 12;
+	x->size = 2;
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
 		// x->value[i] = 1751;
-		x->value[i] = UINT_MAX-86262;
+		x->value[i] = rand() % UINT_MAX;
 	}
 
 	// Cari nilai eksponen e = (p-x-1) untuk dekripsi
@@ -199,21 +200,21 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	//========================================================//
 	// Blok plainteks
 	for(int i = 0 ; i < banyakdata ; i++){
-		m[i].size = 12;
+		m[i].size = 2;
 		m[i].value = (uint*) malloc(m[i].size * sizeof(uint));
 		for (int j = 0; j < m[i].size; j++)
 		{
 			// m[i].value[j] = 1001;
-			m[i].value[j] = UINT_MAX-5522;
+			m[i].value[j] = rand() % UINT_MAX;
 		}
 
 		// Nilai k masing-masing blok
-		k[i].size = 12;
+		k[i].size = 2;
 		k[i].value = (uint*) malloc(k[i].size * sizeof(uint));
 		for (int j = 0; j < k[i].size; j++)
 		{
 			// k[i].value[j] = 77;
-			k[i].value[j] = UINT_MAX-38227;
+			k[i].value[j] = rand() % UINT_MAX;
 		}
 	}
 	// Alokasi memori untuk result
