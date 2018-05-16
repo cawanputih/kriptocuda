@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 25600;
-int dimensigrid = 200;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
@@ -75,7 +75,6 @@ __host__ __device__ void kali(big *a, big *b, big* res) {
 	}
 }
 
-
 __host__ __device__ void modulo(big* a, big* b, big* res, uint* minbuff) {
 	res->size = a->size;
 	for(char i = 0 ; i < res->size ;i++){
@@ -131,7 +130,6 @@ __host__ __device__ void modulo(big* a, big* b, big* res, uint* minbuff) {
 	while (res->size > 0 && res->value[res->size - 1] == 0)
 		res->size--;
 }
-
 
 void tambah(big* a, char b, big* res) {
 	if (a->size == 0) {
@@ -216,31 +214,16 @@ __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff,
 		}
 	}
 	// printf("res adlaah %u\n", res->value[0]);
-
 }
 
 __device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff) {
-	// // BLok 1 Cipher
+	// BLok 1 Cipher
 	modexp(g,k,p,res,minbuff->value,mulbuff);
-	// printf("res adalah %u\n", res->value[0]);
-	// // Blok 2 Cipher
+	
+	// Blok 2 Cipher
 	modexp(y, k, p, res + 1,minbuff->value,mulbuff);
 	kali(res + 1, m, mulbuff);
 	modulo(mulbuff, p, res+1, minbuff->value);
-
-	// printf("res  val 0 adalah %p\n", &(res->value[0]));
-	// printf("res  val 1 adalah %p\n", &(res->value[1]));
-	// printf("res  val 2 adalah %p\n", &(res->value[2]));
-	// printf("res  val 3 adalah %p\n", &(res->value[3]));
-
-	// printf("res 1 val 0 adalah %p\n", &((res+1)->value[0]));
-	// printf("res 1 val 1 adalah %p\n", &((res+1)->value[1]));
-	// printf("res 1 val 2 adalah %p\n", &((res+1)->value[2]));
-	// printf("res 1 val 3 adalah %p\n", &((res+1)->value[3]));
-
-	// printf("res val 0 adalah %u\n", res->value[0]);
-	// printf("res 1 val 0 adalah %u\n", (res+1)->value[0]);
-
 }
 
 __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
@@ -253,14 +236,14 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 	__shared__ big sp;
 	__shared__ big sg;
 	__shared__ big sy;
-	__shared__ uint s[3200];
+	__shared__ uint s[1600];
 
 	uint *sresval = s;
-	uint *spval = (uint*)&sresval[8*128*2];
-	uint *sgval = (uint*)&spval[4];
-	uint *syval = (uint*)&sgval[4];
-	uint *smval = (uint*)&syval[4];
-	uint *skval = (uint*)&smval[4*128];
+	uint *spval = (uint*)&sresval[4*128*2];
+	uint *sgval = (uint*)&spval[2];
+	uint *syval = (uint*)&sgval[2];
+	uint *smval = (uint*)&syval[2];
+	uint *skval = (uint*)&smval[2*128];
 
 
 	sm[jdx].size = m[idx].size;
@@ -269,33 +252,25 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 	sg.size = g[0].size;
 	sy.size = y[0].size;
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 2; i++)
 	{
-		smval[jdx*4+i] = m[idx].value[i];
-		skval[jdx*4+i] = k[idx].value[i];
+		smval[jdx*2+i] = m[idx].value[i];
+		skval[jdx*2+i] = k[idx].value[i];
 		spval[i] = p[0].value[i];
 		sgval[i] = g[0].value[i];
 		syval[i] = y[0].value[i];
 	}
 
-	sm[jdx].value = (uint*)&smval[jdx*4];
-	sk[jdx].value = (uint*)&skval[jdx*4];
-	sres[2*jdx].value = (uint*)&sresval[jdx*8*2];
-	sres[2*jdx+1].value = (uint*)&sresval[jdx*8*2+8];
+	sm[jdx].value = (uint*)&smval[jdx*2];
+	sk[jdx].value = (uint*)&skval[jdx*2];
+	sres[2*jdx].value = (uint*)&sresval[jdx*4*2];
+	sres[2*jdx+1].value = (uint*)&sresval[jdx*4*2+4];
 	sp.value = spval;
 	sg.value = sgval;
 	sy.value = syval;
 
 	__syncthreads();
 
-	// if(idx < 10){
-	// 		// printf("pointer2 di %d = %p \n", 2*jdx,sres[2*jdx].value);
-	// 		// printf("pointer2 di %d = %p \n", 2*jdx+1,sres[2*jdx+1].value);
-
-	// 		// printf("sresval pointer di %d = %p \n", jdx,sresval + jdx);
-
-	// 		// printf("pointer big di %d = %p \n", 2*jdx,sres+2*jdx);
-	// 		// printf("pointer big2 di %d = %p \n", 2*jdx+1,sres+2*jdx+1);
 
 	big* minbuff = (big*) malloc(sizeof(big));
 	big* mulbuff = (big*) malloc(sizeof(big));
@@ -303,12 +278,7 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 	minbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
 	mulbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
 
-
-			enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
-	// }
-
-	// printf("sres %d adalah %d\n", 2*idx, sres[2*jdx].size);
-	// printf("sres %d adalah %d\n", 2*idx+1, sres[2*jdx+1].size);
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
 
 	res[2*idx].size = sres[2*jdx].size;
 	res[2*idx+1].size = sres[2*jdx+1].size;
@@ -466,7 +436,6 @@ void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 
 	//cudaProfilerStop();
 	//free(med);
-
 }
 
 void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y){
@@ -493,11 +462,11 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 	modexp(g,x,p,y,minbuff,mulbuff);
 }
 
-void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2){
+void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 	// Kunci publik p
 	srand(2018);
 
-	p->size = 4;
+	p->size = 2;
 	p->value = (uint*) malloc(p->size * sizeof(uint));
 	p->value[0] = UINT_MAX;
 	for (int i = 1; i < p->size; i++)
@@ -507,7 +476,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 
 
 	// Kunci publik g
-	g->size = 4;
+	g->size = 2;
 	g->value = (uint*) malloc(g->size * sizeof(uint));
 	for (int i = 0; i < g->size; i++)
 	{
@@ -516,7 +485,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	}
 
 	// Kunci privat x
-	x->size = 4;
+	x->size = 2;
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
@@ -549,7 +518,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	//========================================================//
 	// Blok plainteks
 	for(int i = 0 ; i < banyakdata ; i++){
-		m[i].size = 4;
+		m[i].size = 2;
 		m[i].value = (uint*) malloc(m[i].size * sizeof(uint));
 		for (int j = 0; j < m[i].size; j++)
 		{
@@ -557,7 +526,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 		}
 
 		// Nilai k masing-masing blok
-		k[i].size = 4;
+		k[i].size = 2;
 		k[i].value = (uint*) malloc(k[i].size * sizeof(uint));
 		for (int j = 0; j < k[i].size; j++)
 		{
@@ -570,12 +539,6 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	for (int i = 0; i < banyakdata*2; i++)
 	{
 		res[i].value = (uint*) malloc(sizeof(uint) * p->size);
-	}
-
-	// Alokasi memori untuk result 2
-	for (int i = 0; i < banyakdata; i++)
-	{
-		res2[i].value = (uint*) malloc(sizeof(uint) * p->size);
 	}
 }
 
@@ -590,7 +553,7 @@ int main(){
 	k = (big*)malloc(banyakdata * sizeof(big));
 	res = (big*)malloc(banyakdata * 2 * sizeof(big));
 
-	init(p,g,x,e,y,m,k,res,res2);
+	init(p,g,x,e,y,m,k,res);
 	mainenkripsi(m,k,res,g,p,y);
 
 	free(p->value);
@@ -609,7 +572,7 @@ int main(){
 	free(k);
 	free(res->value);
 	free(res);
-
+	
 	return 0;
 }
 
