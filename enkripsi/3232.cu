@@ -215,14 +215,14 @@ __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff,
 	// printf("res adlaah %u\n", res->value[0]);
 }
 
-__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff) {
+__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, uint *minbuff, big *mulbuff) {
 	// BLok 1 Cipher
-	modexp(g,k,p,res,minbuff->value,mulbuff);
+	modexp(g,k,p,res,minbuff,mulbuff);
 	
 	// Blok 2 Cipher
-	modexp(y, k, p, res + 1,minbuff->value,mulbuff);
+	modexp(y, k, p, res + 1,minbuff,mulbuff);
 	kali(res + 1, m, mulbuff);
-	modulo(mulbuff, p, res+1, minbuff->value);
+	modulo(mulbuff, p, res+1, minbuff);
 }
 
 __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big* minbuff){
@@ -240,7 +240,8 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big*
 
 	uint *sresval = s;
 	uint *smulbuffval = (uint*)&sresval[2*128*2];
-	uint *spval = (uint*)&smulbuffval[128*2];
+	uint *sminbuffval = (uint*)&smulbuffval[128*2];
+	uint *spval = (uint*)&sminbuffval[128*1];
 	uint *sgval = (uint*)&spval[1];
 	uint *syval = (uint*)&sgval[1];
 	uint *smval = (uint*)&syval[1];
@@ -271,7 +272,7 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big*
 
 	__syncthreads();
 
-	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff + idx, smulbuff + jdx);
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, sminbuffval + jdx, smulbuff + jdx);
 
 	res[2*idx].size = sres[2*jdx].size;
 	res[2*idx+1].size = sres[2*jdx+1].size;
