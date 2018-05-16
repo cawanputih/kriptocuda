@@ -9,8 +9,8 @@
 typedef unsigned long ulint;
 typedef unsigned long long ulint64;
 
-int banyakdata = 256000;
-int dimensigrid = 2000;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 __host__ __device__ void modexp(ulint a, ulint b, ulint c, ulint* res) {
@@ -53,9 +53,6 @@ __global__ void kerneldek(ulint *c, ulint p, ulint e, ulint *res) {
 
 cudaError_t enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
 	cudaError_t cudaStatus;
-
-	cudaSetDevice(0);
-
 	//=====================BAGIAN M[] K[] DAN RES[] ====================================//
 	ulint *devm, *devk, *devres;
 	
@@ -81,20 +78,8 @@ cudaError_t enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *r
 
 	// printf("<<<<<<<<<<<<<<<<<<KERNEL>>>>>>>>>>>>>>>>>\n");
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start);
 
 	kernelenk << <dimensigrid, dimensiblok>> >(devm,devk,g,p,y,devres);
-
-	cudaEventRecord(stop);
-
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Durasi enkripsi= %f ms\n", milliseconds);
 
 	cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess) {
@@ -124,8 +109,6 @@ cudaError_t enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *r
 cudaError_t dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 	cudaError_t cudaStatus;
 
-	cudaSetDevice(0);
-
 	//=====================BAGIAN M[] K[] DAN RES[] ====================================//
 	ulint *devc, *devres2;
 	
@@ -137,20 +120,7 @@ cudaError_t dekripsiCUDA(ulint *c, ulint p, ulint e, ulint *res2) {
 
 	// printf("<<<<<<<<<<<<<<<<<<KERNEL>>>>>>>>>>>>>>>>>\n");
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start);
-
 	kerneldek << <dimensigrid, dimensiblok>> >(devc,p,e,devres2);
-
-	cudaEventRecord(stop);
-
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Durasi dekripsi= %f ms\n", milliseconds);
 
 	cudaStatus = cudaGetLastError();
 	if (cudaStatus != cudaSuccess) {
@@ -209,7 +179,22 @@ int main(){
 	// printf("m[...]\n");
 	// printf("m[%d] = %lu\n", banyakdata-1, m[banyakdata-1]);
 
-	enkripsiCUDA(m,k,g,p,y,res);
+	cudaSetDevice(0);
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaEventRecord(start);
+
+		enkripsiCUDA(m,k,g,p,y,res);
+
+	cudaEventRecord(stop);
+
+	cudaEventSynchronize(stop);
+	float milliseconds = 0;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("Durasi enkripsi= %f ms\n", milliseconds);
+
 
 	// printf("<<<<<<<<<<<<<<Hasil Enkripsi>>>>>>>>>>>>>>>\n");
 	// for (int i = 0; i < 4; i++) {
@@ -220,7 +205,20 @@ int main(){
 	// printf("c[%d] = %lu 	c[%d] = %lu\n", banyakdata * 2-2, res[banyakdata * 2-2], banyakdata *2-1,res[banyakdata*2-1]);
 
 	e = p-x-1;
-	dekripsiCUDA(res,p,e,res2);
+
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	cudaEventRecord(start);
+
+		dekripsiCUDA(res,p,e,res2);
+
+	cudaEventRecord(stop);
+
+	cudaEventSynchronize(stop);
+	milliseconds = 0;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("Durasi dekripsi= %f ms\n", milliseconds);
 
 	// printf("<<<<<<<<<<<<<<Hasil Dekripsi>>>>>>>>>>>>>>>\n");
 	// for (int i = 0; i < 4; i++) {

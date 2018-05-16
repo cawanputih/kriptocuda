@@ -8,20 +8,14 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 1024;
-int dimensigrid = 8;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
 	char size;
 	uint* value;
 }big;
-
-typedef struct {
-	short size;
-	char* value;
-}stringnumber;
-
 
 __host__ __device__ short ukuranbit(big *a);
 __host__ __device__ char getbit(big* a, short count);
@@ -33,8 +27,8 @@ __device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *
 __device__ void dekripsi(big *c1, big *c2, big *e, big *p, big *res, big *minbuff, big *mulbuff);
 __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff);
 __global__ void kerneldek(big *c, big *e, big *p, big *res, big *minbuff, big *mulbuff);
-cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res);
-cudaError_t CUDAdek(big *c, big *e, big* p, big *res);
+void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res);
+void CUDAdek(big *c, big *e, big* p, big *res);
 void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y);
 void maindekripsi(big* c,big* x,big* p,big* res2);
 void tambah(big* a, char b, big* res);
@@ -42,11 +36,6 @@ void kurang(big* a, big *b, big* res);
 void divandmod(big* a, big* &b, big* divres, big* modres, uint* minbuff);
 void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff);
 void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2);
-void copybig(big* a, big* res);
-void stringtobig(stringnumber* sn, big* res, big* mulbuff, big* ten);
-void bigtostring(big* x, stringnumber* sn, big* ten, big* xbuff, big* divbuff, big* modbuff, uint* minbuff);
-void printsn(stringnumber* sn);
-void teskonversi();
 
 
 __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff, big* mulbuff){
@@ -162,23 +151,6 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 
 			enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
 	// }
-	if(idx == 0){
-		printf("Semangkas\n");
-		printf("xx[0].size = %u\n", sgval[0]);
-		printf("xx[0].size = %u\n", g[0].value[0]);
-		printf("size  = %u\n", m[0].size);
-		printf("sm[0].val 0 = %u\n", y[0].value[1]);
-		printf("Pointer 1 = %p\n", &(sm[0].value[0]));
-		printf("Pointer 2 = %p\n", &(sm+0)->value[0]);
-
-		big* poinm = sm;
-		printf("Pointer 3 = %p\n", poinm);
-		printf("Pointer 4 = %p\n", &poinm->value[0]);
-
-		printf("sres 0 adalah %d\n", sres[2].size);
-		printf("sres 0 adalah %d\n", sres[2].value[0]);
-
-	}
 
 	// printf("sres %d adalah %d\n", 2*idx, sres[2*jdx].size);
 	// printf("sres %d adalah %d\n", 2*idx+1, sres[2*jdx+1].size);
@@ -251,9 +223,8 @@ __global__ void kerneldek(big *c, big *e, big *p, big *res){
 	}
 }
 
-cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
-	cudaError_t cudaStatus;
-	cudaSetDevice(0);
+void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
+	
 	//=====================BAGIAN G, P, DAN Y ====================================//
 	big *devg, *devp, *devy;
 
@@ -302,14 +273,14 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 	// Alokasi Memori untuk blok m dan k
 	for (int i = 0; i < banyakdata; i++) {
 		big temp;
-		cudaMalloc((void**)&tempvalue[i], (sizeof(uint) * m[i].size));
+		cudaMalloc((void**)&tempvalue[i], (sizeof(uint) * p->size));
 		cudaMemcpy(tempvalue[i], m[i].value, (sizeof(uint) * m[i].size), cudaMemcpyHostToDevice);
 		temp.size = m[i].size;
 		temp.value = tempvalue[i];
 		cudaMemcpy((devm + i), &temp, (sizeof(big)), cudaMemcpyHostToDevice);
 
 		big temp2;
-		cudaMalloc((void**)&tempvalue2[i], (sizeof(uint) * k[i].size));
+		cudaMalloc((void**)&tempvalue2[i], (sizeof(uint) * p->size));
 		cudaMemcpy(tempvalue2[i], k[i].value, (sizeof(uint) * k[i].size), cudaMemcpyHostToDevice);
 		temp2.size = k[i].size;
 		temp2.value = tempvalue2[i];
@@ -343,28 +314,8 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
  //    double total_db = (double)total_byte ;
  //    double used_db = total_db - free_db ;
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start);
 
 	kernelenk << <dimensigrid, dimensiblok >> >(devm, devk, devg, devp, devy, devres);
-
-	cudaStatus = cudaGetLastError();
-	cudaEventRecord(stop);
-
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Durasi = %f milidetik\n", milliseconds);
-	// printf("GPU Memory: used = %f, free = %f MB, total = %f MB\n",used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-	}
-	else {
-		// printf("Success\n");
-	}
 
 	cudaDeviceSynchronize();
 
@@ -414,12 +365,10 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 	//cudaProfilerStop();
 	//free(med);
 
-	return cudaStatus;
 }
 
-cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
-	cudaError_t cudaStatus;
-	cudaSetDevice(0);
+void CUDAdek(big *c, big *e, big* p, big *res) {
+	
 	//=====================BAGIAN p dan e ( eksponen)  ====================================//
 	big *devp, *deve;
 
@@ -495,28 +444,8 @@ cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
  //    double total_db = (double)total_byte ;
  //    double used_db = total_db - free_db ;
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start);
-
+	
 	kerneldek << <dimensigrid, dimensiblok >> >(devc, deve, devp, devres);
-
-	cudaStatus = cudaGetLastError();
-	cudaEventRecord(stop);
-
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Durasi = %f milidetik\n", milliseconds);
-	// printf("GPU Memory: used = %f, free = %f MB, total = %f MB\n",used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-	}
-	else {
-		// printf("Success\n");
-	}
 
 	cudaDeviceSynchronize();
 
@@ -560,53 +489,44 @@ cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
 
 	free(tempres);
     
-	return cudaStatus;
 }
 
 void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y){
-	printf("Encrypting...\n");
+	// printf("Encrypting...\n");
 	//========================================================//
 
-	cudaError_t cudaStatus = CUDAenk(m, k, g, p, y, res);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "\nenkripsiCUDA failed!");
-	}
+	cudaSetDevice(0);
 
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaDeviceReset failed!");
-	}
+	CUDAenk(m, k, g, p, y, res);
 
-	for (int i = 0; i < 5; i++)
-	{
-		printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
-	}
-	printf("Cipher ... : ...\n");
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
+	cudaDeviceReset();
+
+	// for (int i = 0; i < 5; i++)
+	// {
+	// 	printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
+	// }
+	// printf("Cipher ... : ...\n");
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
 }
 
 void maindekripsi(big* c,big* e,big* p,big* res2){
-	printf("Decrypting...\n");
+	// printf("Decrypting...\n");
 	//========================================================//
 
-	cudaError_t cudaStatus = CUDAdek(c, e, p, res2);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "\ndekripsiCUDA failed!");
-	}
+	cudaSetDevice(0);
 
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaDeviceReset failed!");
-	}
+	CUDAdek(c, e, p, res2);
 
-	for (int i = 0; i < 5; i++)
-	{
-		printf("Plain %d  size %d : %u\n",i, res2[i].size, res2[i].value[0]);
-		printf("Plain %d  size %d : %u\n",i, res2[i].size, res2[i].value[1]);
-	}
-	printf("Plain ... : ...\n");
-	printf("Plain %d  size %d : %u\n",banyakdata-1, res2[banyakdata-1].size, res2[banyakdata-1].value[0]);
+	cudaDeviceReset();
+
+	// for (int i = 0; i < 5; i++)
+	// {
+	// 	printf("Plain %d  size %d : %u\n",i, res2[i].size, res2[i].value[0]);
+	// 	printf("Plain %d  size %d : %u\n",i, res2[i].size, res2[i].value[1]);
+	// }
+	// printf("Plain ... : ...\n");
+	// printf("Plain %d  size %d : %u\n",banyakdata-1, res2[banyakdata-1].size, res2[banyakdata-1].value[0]);
 }
 
 void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
@@ -664,25 +584,27 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	y->value = (uint*) malloc(p->size * 2 * sizeof(uint));
 	carikunciy(g,x,p,y,minbuff,mulbuff);
 
-	printf("y 0 : %u\n", y->value[0]);
-	printf("y 0 : %u\n", y->value[1]);
+	// printf("y 0 : %u\n", y->value[0]);
+	// printf("y 0 : %u\n", y->value[1]);
+
 	//========================================================//
 	// Blok plainteks
-	m->size = 4;
-	m->value = (uint*) malloc(m->size * sizeof(uint));
-	for (int i = 0; i < m->size; i++)
-	{
-		// m->value[i] = 1001;
-		m->value[i] = rand() % UINT_MAX;
-	}
+	for(int i = 0 ; i < banyakdata ; i++){
+		m[i].size = 4;
+		m[i].value = (uint*) malloc(m[i].size * sizeof(uint));
+		for (int j = 0; j < m[i].size; j++)
+		{
+			m[i].value[j] = rand() % UINT_MAX;
+		}
 
-	// Nilai k masing-masing blok
-	k->size = 4;
-	k->value = (uint*) malloc(k->size * sizeof(uint));
-	for (int i = 0; i < k->size; i++)
-	{
-		// k->value[i] = 77;
-		k->value[i] = rand() % UINT_MAX;
+		// Nilai k masing-masing blok
+		k[i].size = 4;
+		k[i].value = (uint*) malloc(k[i].size * sizeof(uint));
+		for (int j = 0; j < k[i].size; j++)
+		{
+			// k[i].value[j] = 77;
+			k[i].value[j] = rand() % UINT_MAX;
+		}
 	}
 
 	// Alokasi memori untuk result
@@ -712,7 +634,7 @@ int main(){
 
 	init(p,g,x,e,y,m,k,res,res2);
 	mainenkripsi(m,k,res,g,p,y);
-	printf("			=========================			\n");
+	// printf("			=========================			\n");
 	maindekripsi(res,e,p,res2);
 
 
@@ -985,89 +907,4 @@ void kurang(big* a, big *b, big* res) {
 	if (res->value[res->size - 1] == 0){
 		res->size--;
 	}
-}
-
-void copybig(big* a, big* res){
-	res->size = a->size;
-	for (int i = 0; i < res->size; i++){
-		res->value[i] = a->value[i];
-	}
-}
-
-void stringtobig(stringnumber* sn, big* res, big* mulbuff, big* ten){
-	res->size = 0;
-	for (int i = sn->size-1; i >= 0; i--){
-		kali(res, ten, mulbuff);
-		tambah(mulbuff, sn->value[i], res);
-	}
-}
-
-void bigtostring(big* x, stringnumber* sn, big* ten, big* xbuff, big* divbuff, big* modbuff, uint* minbuff) {
-
-	copybig(x,xbuff);
-	short snlength = 0;
-
-	while (xbuff->size != 0 ) {
-		divandmod(xbuff,ten,divbuff,modbuff,minbuff);
-		sn->value[snlength] = (char) modbuff->value[0];
-		snlength++;
-		copybig(divbuff,xbuff);
-	}
-
-	sn->size = snlength;
-}
-
-void printsn(stringnumber* sn){
-	for (int i = 0; i < sn->size; ++i){
-		printf("%d", sn->value[sn->size-i-1]);
-	}
-	printf("\n");
-}
-
-void teskonversi(){
-	int seed = time(NULL);
-    srand(seed);
-
-	stringnumber *sn = (stringnumber*) malloc(sizeof(stringnumber));
-	sn->size = 25;
-	sn->value = (char *) malloc(sn->size);
-
-	for (int i = 0; i < sn->size; i++)
-	{
-		sn->value[i] = rand() % 10;
-	}
-
-	big* konversi = (big*) malloc(sizeof(big));
-	big* mulbuff = (big*) malloc(sizeof(big));
-	big* ten = (big*) malloc(sizeof(big));
-
-	konversi->value = (uint*) malloc(sizeof(10));
-	mulbuff->value = (uint*) malloc(sizeof(10));
-	ten->value = (uint*) malloc(sizeof(1));
-	ten->size = 1;
-	ten->value[0] = 10;
-
-	printf("Stringnumber awal : ");
-	printsn(sn);
-	stringtobig(sn, konversi, mulbuff, ten);
-	printf("konversi size %d\n", konversi->size);
-	printf("konversi value 0  %u\n", konversi->value[0]);
-	printf("konversi value 0  %u\n", konversi->value[1]);
-
-	stringnumber *sn2 = (stringnumber*) malloc(sizeof(stringnumber));
-	big* xbuff = (big*) malloc(sizeof(big));
-	big* divbuff = (big*) malloc(sizeof(big));
-	big* modbuff = (big*) malloc(sizeof(big));
-
-	sn2->value = (char *) malloc(100);
-
-	xbuff->value = (uint *) malloc(sizeof(uint) * 10);
-	divbuff->value = (uint *) malloc(sizeof(uint) * 10);
-	modbuff->value = (uint *) malloc(sizeof(uint) * 10);
-
-	uint* minbuff = (uint*) malloc(sizeof(uint) * 10);
-
-	bigtostring(konversi,sn2,ten,xbuff,divbuff,modbuff,minbuff);
-	printf("Stringnumber akhir : ");
-	printsn(sn2);
 }
