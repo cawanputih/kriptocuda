@@ -51,31 +51,6 @@ __global__ void kerneldek(ulint *c, ulint p, ulint e, ulint *res) {
 	dekripsi(c[2*i], c[2*i+1], p, e, res + i);
 }
 
-void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
-	//=====================BAGIAN M[] K[] DAN RES[] ====================================//
-	ulint *devm, *devk, *devres;
-	
-
-
-	cudaMalloc((void**)&devm, banyakdata * sizeof(ulint));
-	cudaMalloc((void**)&devk, banyakdata * sizeof(ulint));
-	cudaMalloc((void**)&devres, banyakdata * 2 * sizeof(ulint));
-	
-	cudaMemcpy((devm), m, (sizeof(ulint) * banyakdata), cudaMemcpyHostToDevice);
-	cudaMemcpy((devk), k, (sizeof(ulint) * banyakdata), cudaMemcpyHostToDevice);	
-
-	kernelenk << <dimensigrid, dimensiblok>> >(devm,devk,g,p,y,devres);
-
-	cudaDeviceSynchronize();
-
-	//	COPY FROM DEVICE TO HOST HERE 
-	//cudaMemcpy(res, devres, (sizeof(ulint) * 2 * banyakdata), cudaMemcpyDeviceToHost);
-	
-	cudaFree(devm);
-	cudaFree(devk);
-	cudaFree(devres);
-}
-
 void initenkripsi(ulint *m, ulint *k){
 	for (int i = 0; i < banyakdata; i++) {
 		m[i] = rand() % 3999999978;
@@ -98,16 +73,11 @@ int main(){
 	modexp(g,x,p,&y);
 	initenkripsi(m, k);
 
-	//cudaSetDevice(0);
-
 	//enkripsiCUDA(m,k,g,p,y,res);
 
 	kernelenk << <dimensigrid, dimensiblok>> >(m,k,g,p,y,res);
 	cudaDeviceSynchronize();
 
-	cudaFree(m);
-	cudaFree(k);
-	cudaFree(res);
 	// printf("<<<<<<<<<<<<<<Hasil Enkripsi>>>>>>>>>>>>>>>\n");
 	// for (int i = 0; i < 4; i++) {
 	// 	printf("c[%d] = %lu 	c[%d] = %lu\n", 2*i, res[2*i], 2*i+1, res[2*i+1]);
@@ -124,9 +94,9 @@ int main(){
 	// printf("m[...]\n");
 	// printf("m[%d] = %lu\n", banyakdata-1, res2[banyakdata-1]);
 
-	// free(m);
-	// free(k);
-	// free(res);
+	cudaFree(m);
+	cudaFree(k);
+	cudaFree(res);
 
 	return 0;
 }
