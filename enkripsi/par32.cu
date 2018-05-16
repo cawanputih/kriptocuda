@@ -9,9 +9,9 @@
 typedef unsigned long ulint;
 typedef unsigned long long ulint64;
 
-int banyakdata = 256000;
-int dimensigrid = 2000;
-int dimensiblok = 128;
+int banyakdata = 335544320;
+int dimensigrid = 327680;
+int dimensiblok = 1024;
 
 __host__ __device__ void modexp(ulint a, ulint b, ulint c, ulint* res) {
 	ulint64 s = a;

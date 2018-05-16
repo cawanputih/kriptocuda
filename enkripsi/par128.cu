@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 25600	;
-int dimensigrid = 200;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
@@ -493,7 +493,7 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 	modexp(g,x,p,y,minbuff,mulbuff);
 }
 
-void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *res2){
+void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 	// Kunci publik p
 	srand(2018);
 
@@ -571,12 +571,6 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 	{
 		res[i].value = (uint*) malloc(sizeof(uint) * p->size);
 	}
-
-	// Alokasi memori untuk result 2
-	for (int i = 0; i < banyakdata; i++)
-	{
-		res2[i].value = (uint*) malloc(sizeof(uint) * p->size);
-	}
 }
 
 int main(){
@@ -590,7 +584,7 @@ int main(){
 	k = (big*)malloc(banyakdata * sizeof(big));
 	res = (big*)malloc(banyakdata * 2 * sizeof(big));
 
-	init(p,g,x,e,y,m,k,res,res2);
+	init(p,g,x,e,y,m,k,res);
 	mainenkripsi(m,k,res,g,p,y);
 
 	free(p->value);
