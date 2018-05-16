@@ -69,7 +69,7 @@ void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
 	cudaDeviceSynchronize();
 
 	//	COPY FROM DEVICE TO HOST HERE 
-	//cudaMemcpy(res, devres, (sizeof(ulint) * 2 * banyakdata), cudaMemcpyDeviceToHost);
+	cudaMemcpy(res, devres, (sizeof(ulint) * 2 * banyakdata), cudaMemcpyDeviceToHost);
 	
 	cudaFree(devm);
 	cudaFree(devk);
