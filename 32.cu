@@ -10,7 +10,7 @@ typedef unsigned long ulint;
 typedef unsigned long long ulint64;
 
 int banyakdata = 256000;
-int dimensigrid = 200;
+int dimensigrid = 2000;
 int dimensiblok = 128;
 
 void modexp(ulint a, ulint b, ulint c, ulint* res) {
