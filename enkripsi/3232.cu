@@ -225,12 +225,13 @@ __device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *
 	modulo(mulbuff, p, res+1, minbuff->value);
 }
 
-__global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big* minbuff, big *mulbuff){
+__global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big* minbuff){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int jdx = threadIdx.x;
 
 	__shared__ big sm[128];
 	__shared__ big sk[128];
+	__shared__ big smulbuff[128];
 	__shared__ big sres[256];
 	__shared__ big sp;
 	__shared__ big sg;
@@ -238,11 +239,12 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big*
 	extern __shared__ uint s[];
 
 	uint *sresval = s;
-	uint *spval = (uint*)&sresval[2*128*2];
+	uint *smulbuffval = (uint*)&sresval[2*128*2];
+	uint *spval = (uint*)&smulbuffval[128*2];
 	uint *sgval = (uint*)&spval[1];
 	uint *syval = (uint*)&sgval[1];
 	uint *smval = (uint*)&syval[1];
-	uint *skval = (uint*)&smval[1*128];
+	uint *skval = (uint*)&smval[128*1];
 
 
 	sm[jdx].size = m[idx].size;
@@ -262,13 +264,14 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big*
 	sk[jdx].value = (uint*)&skval[jdx];
 	sres[2*jdx].value = (uint*)&sresval[jdx*2*2];
 	sres[2*jdx+1].value = (uint*)&sresval[jdx*2*2+2];
+	smulbuff[jdx].value = (uint*)&smulbuffval[jdx*2];
 	sp.value = spval;
 	sg.value = sgval;
 	sy.value = syval;
 
 	__syncthreads();
 
-	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff + idx, mulbuff + idx);
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff + idx, smulbuff + jdx);
 
 	res[2*idx].size = sres[2*jdx].size;
 	res[2*idx+1].size = sres[2*jdx+1].size;
@@ -370,7 +373,7 @@ void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 	}
 
 
-	kernelenk << <dimensigrid, dimensiblok , 771 * sizeof(uint)>> >(devm, devk, devg, devp, devy, devres, minbuff, mulbuff);
+	kernelenk << <dimensigrid, dimensiblok , 1200 * sizeof(uint)>> >(devm, devk, devg, devp, devy, devres, minbuff);
 
 	cudaDeviceSynchronize();
 
