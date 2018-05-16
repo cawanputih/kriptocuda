@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 25600;
-int dimensigrid = 200;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
@@ -216,14 +216,14 @@ __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff,
 	// printf("res adlaah %u\n", res->value[0]);
 }
 
-__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff) {
+__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, uint *minbuff, big *mulbuff) {
 	// BLok 1 Cipher
-	modexp(g,k,p,res,minbuff->value,mulbuff);
+	modexp(g,k,p,res,minbuff,mulbuff);
 	
 	// Blok 2 Cipher
-	modexp(y, k, p, res + 1,minbuff->value,mulbuff);
+	modexp(y, k, p, res + 1,minbuff,mulbuff);
 	kali(res + 1, m, mulbuff);
-	modulo(mulbuff, p, res+1, minbuff->value);
+	modulo(mulbuff, p, res+1, minbuff);
 }
 
 __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
@@ -232,14 +232,17 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 
 	__shared__ big sm[128];
 	__shared__ big sk[128];
+	__shared__ big smulbuff[128];
 	__shared__ big sres[256];
 	__shared__ big sp;
 	__shared__ big sg;
 	__shared__ big sy;
-	__shared__ uint s[1600];
+	__shared__ uint s[2400];
 
 	uint *sresval = s;
-	uint *spval = (uint*)&sresval[4*128*2];
+	uint *smulbuffval = (uint*)&sresval[4*128*2];
+	uint *sminbuffval = (uint*)&smulbuffval[4*128];
+	uint *spval = (uint*)&sminbuffval[2*128];
 	uint *sgval = (uint*)&spval[2];
 	uint *syval = (uint*)&sgval[2];
 	uint *smval = (uint*)&syval[2];
@@ -265,20 +268,14 @@ __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
 	sk[jdx].value = (uint*)&skval[jdx*2];
 	sres[2*jdx].value = (uint*)&sresval[jdx*4*2];
 	sres[2*jdx+1].value = (uint*)&sresval[jdx*4*2+4];
+	smulbuff[jdx].value = (uint*)&smulbuffval[jdx*4];
 	sp.value = spval;
 	sg.value = sgval;
 	sy.value = syval;
 
 	__syncthreads();
 
-
-	big* minbuff = (big*) malloc(sizeof(big));
-	big* mulbuff = (big*) malloc(sizeof(big));
-
-	minbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-	mulbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-
-	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, sminbuffval+jdx, smulbuff+jdx);
 
 	res[2*idx].size = sres[2*jdx].size;
 	res[2*idx+1].size = sres[2*jdx+1].size;
