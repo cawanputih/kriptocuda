@@ -55,8 +55,6 @@ void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
 	//=====================BAGIAN M[] K[] DAN RES[] ====================================//
 	ulint *devm, *devk, *devres;
 	
-
-
 	cudaMalloc((void**)&devm, banyakdata * sizeof(ulint));
 	cudaMalloc((void**)&devk, banyakdata * sizeof(ulint));
 	cudaMalloc((void**)&devres, banyakdata * 2 * sizeof(ulint));
@@ -98,8 +96,6 @@ int main(){
 	x = rand() % 3999999978;
 	modexp(g,x,p,&y);
 	initenkripsi(m, k);
-
-	cudaSetDevice(0);
 
 	enkripsiCUDA(m,k,g,p,y,res);
 
