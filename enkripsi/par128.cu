@@ -8,9 +8,11 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 2560;
-int dimensigrid = 20;
+
+int banyakdata = 1280;
+int dimensigrid = 10;
 int dimensiblok = 128;
+int sizebig = 4;
 
 typedef struct {
 	char size;
@@ -75,7 +77,6 @@ __host__ __device__ void kali(big *a, big *b, big* res) {
 	}
 }
 
-
 __host__ __device__ void modulo(big* a, big* b, big* res, uint* minbuff) {
 	res->size = a->size;
 	for(char i = 0 ; i < res->size ;i++){
@@ -131,7 +132,6 @@ __host__ __device__ void modulo(big* a, big* b, big* res, uint* minbuff) {
 	while (res->size > 0 && res->value[res->size - 1] == 0)
 		res->size--;
 }
-
 
 void tambah(big* a, char b, big* res) {
 	if (a->size == 0) {
@@ -202,6 +202,7 @@ void kurang(big* a, big *b, big* res) {
 }
 
 __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff, big* mulbuff){
+	//printf("c val 0 %u\n", c->value[0]);
 	res->size = 1;
 	res->value[0] = 1;
 
@@ -215,277 +216,23 @@ __host__ __device__ void modexp(big* a, big* b, big* c, big* res, uint* minbuff,
 			modulo(mulbuff, c, res, minbuff);
 		}
 	}
-	// printf("res adlaah %u\n", res->value[0]);
 
 }
 
-__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff) {
-	// // BLok 1 Cipher
-	modexp(g,k,p,res,minbuff->value,mulbuff);
-	// printf("res adalah %u\n", res->value[0]);
-	// // Blok 2 Cipher
-	modexp(y, k, p, res + 1,minbuff->value,mulbuff);
-	kali(res + 1, m, mulbuff);
-	modulo(mulbuff, p, res+1, minbuff->value);
-
-	// printf("res  val 0 adalah %p\n", &(res->value[0]));
-	// printf("res  val 1 adalah %p\n", &(res->value[1]));
-	// printf("res  val 2 adalah %p\n", &(res->value[2]));
-	// printf("res  val 3 adalah %p\n", &(res->value[3]));
-
-	// printf("res 1 val 0 adalah %p\n", &((res+1)->value[0]));
-	// printf("res 1 val 1 adalah %p\n", &((res+1)->value[1]));
-	// printf("res 1 val 2 adalah %p\n", &((res+1)->value[2]));
-	// printf("res 1 val 3 adalah %p\n", &((res+1)->value[3]));
-
-	// printf("res val 0 adalah %u\n", res->value[0]);
-	// printf("res 1 val 0 adalah %u\n", (res+1)->value[0]);
-
-}
-
-__global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res){
-	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	int jdx = threadIdx.x;
-
-	__shared__ big sm[128];
-	__shared__ big sk[128];
-	__shared__ big sres[256];
-	__shared__ big sp;
-	__shared__ big sg;
-	__shared__ big sy;
-	__shared__ uint s[3200];
-
-	uint *sresval = s;
-	uint *spval = (uint*)&sresval[8*128*2];
-	uint *sgval = (uint*)&spval[4];
-	uint *syval = (uint*)&sgval[4];
-	uint *smval = (uint*)&syval[4];
-	uint *skval = (uint*)&smval[4*128];
-
-
-	sm[jdx].size = m[idx].size;
-	sk[jdx].size = k[idx].size;
-	sp.size = p[0].size;
-	sg.size = g[0].size;
-	sy.size = y[0].size;
-
-	for (int i = 0; i < 4; i++)
-	{
-		smval[jdx*4+i] = m[idx].value[i];
-		skval[jdx*4+i] = k[idx].value[i];
-		spval[i] = p[0].value[i];
-		sgval[i] = g[0].value[i];
-		syval[i] = y[0].value[i];
-	}
-
-	sm[jdx].value = (uint*)&smval[jdx*4];
-	sk[jdx].value = (uint*)&skval[jdx*4];
-	sres[2*jdx].value = (uint*)&sresval[jdx*8*2];
-	sres[2*jdx+1].value = (uint*)&sresval[jdx*8*2+8];
-	sp.value = spval;
-	sg.value = sgval;
-	sy.value = syval;
-
-	__syncthreads();
-
-	// if(idx < 10){
-	// 		// printf("pointer2 di %d = %p \n", 2*jdx,sres[2*jdx].value);
-	// 		// printf("pointer2 di %d = %p \n", 2*jdx+1,sres[2*jdx+1].value);
-
-	// 		// printf("sresval pointer di %d = %p \n", jdx,sresval + jdx);
-
-	// 		// printf("pointer big di %d = %p \n", 2*jdx,sres+2*jdx);
-	// 		// printf("pointer big2 di %d = %p \n", 2*jdx+1,sres+2*jdx+1);
-
-	big* minbuff = (big*) malloc(sizeof(big));
-	big* mulbuff = (big*) malloc(sizeof(big));
-
-	minbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-	mulbuff->value = (uint*) malloc(sizeof(uint) * sp.size * 2);
-
-
-			enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, minbuff, mulbuff);
-	// }
-
-	// printf("sres %d adalah %d\n", 2*idx, sres[2*jdx].size);
-	// printf("sres %d adalah %d\n", 2*idx+1, sres[2*jdx+1].size);
-
-	res[2*idx].size = sres[2*jdx].size;
-	res[2*idx+1].size = sres[2*jdx+1].size;
-
-	for (int i = 0; i < sres[2*jdx].size; i++)
-	{
-		res[2*idx].value[i] = sres[2*jdx].value[i];
-	}
-
-	for (int i = 0; i < sres[2*jdx+1].size; i++)
-	{
-		res[2*idx+1].value[i] = sres[2*jdx+1].value[i];
-	}
-}
-
-
-void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
+__device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, uint *minbuff, big *mulbuff) {
 	
-	//=====================BAGIAN G, P, DAN Y ====================================//
-	big *devg, *devp, *devy;
 
-	cudaMalloc((void**)&devg, sizeof(big));
-	cudaMalloc((void**)&devp, sizeof(big));
-	cudaMalloc((void**)&devy, sizeof(big));
+	//printf("res adlaah tanga\n");
+	// BLok 1 Cipher
+	modexp(g,k,p,res,minbuff,mulbuff);
+	//printf("res 0 val 0 %u\n", res->value[0]);
+	
+	// Blok 2 Cipher
+	modexp(y, k, p, res + 1,minbuff,mulbuff);
+	kali(res + 1, m, mulbuff);
+	modulo(mulbuff, p, res+1, minbuff);
+	//printf("res 1 val 0 %u\n", (res+1)->value[0]);
 
-	uint *darrg, *darrp, *darry;
-	cudaMalloc((void**)&darrg, g->size * sizeof(uint));
-	cudaMalloc((void**)&darrp, p->size * sizeof(uint));
-	cudaMalloc((void**)&darry, y->size * sizeof(uint));
-
-	big tempg;
-	cudaMemcpy(darrg, g->value, (sizeof(uint) * g->size), cudaMemcpyHostToDevice);
-	tempg.size = g->size;
-	tempg.value = darrg;
-	cudaMemcpy((devg), &tempg, (sizeof(big)), cudaMemcpyHostToDevice);
-
-	big tempp;
-	cudaMemcpy(darrp, p->value, (sizeof(uint) * p->size), cudaMemcpyHostToDevice);
-	tempp.size = p->size;
-	tempp.value = darrp;
-	cudaMemcpy((devp), &tempp, (sizeof(big)), cudaMemcpyHostToDevice);
-
-	big tempy;
-	cudaMemcpy(darry, y->value, (sizeof(uint) * y->size), cudaMemcpyHostToDevice);
-	tempy.size = y->size;
-	tempy.value = darry;
-	cudaMemcpy((devy), &tempy, (sizeof(big)), cudaMemcpyHostToDevice);
-	//=====================BAGIAN M[] DAN K[] ====================================//
-	big *devm, *devk, *devres, *minbuff, *mulbuff;
-
-	cudaMalloc((void**)&devm, banyakdata * sizeof(big));
-	cudaMalloc((void**)&devk, banyakdata * sizeof(big));
-	cudaMalloc((void**)&devres, banyakdata  * 2 *sizeof(big));
-	cudaMalloc((void**)&minbuff, banyakdata  * sizeof(big));
-	cudaMalloc((void**)&mulbuff, banyakdata  * sizeof(big));
-
-	uint **tempvalue = (uint**)malloc(sizeof(uint*)*banyakdata);
-	uint **tempvalue2 = (uint**)malloc(sizeof(uint*)*banyakdata);
-	uint **tempvalue3a = (uint**)malloc(sizeof(uint*)*banyakdata);
-	uint **tempvalue3b = (uint**)malloc(sizeof(uint*)*banyakdata);
-	uint **tempvalue4 = (uint**)malloc(sizeof(uint*)*banyakdata);
-	uint **tempvalue5 = (uint**)malloc(sizeof(uint*)*banyakdata);
-
-	// Alokasi Memori untuk blok m dan k
-	for (int i = 0; i < banyakdata; i++) {
-		big temp;
-		cudaMalloc((void**)&tempvalue[i], (sizeof(uint) * p->size));
-		cudaMemcpy(tempvalue[i], m[i].value, (sizeof(uint) * m[i].size), cudaMemcpyHostToDevice);
-		temp.size = m[i].size;
-		temp.value = tempvalue[i];
-		cudaMemcpy((devm + i), &temp, (sizeof(big)), cudaMemcpyHostToDevice);
-
-		big temp2;
-		cudaMalloc((void**)&tempvalue2[i], (sizeof(uint) * p->size));
-		cudaMemcpy(tempvalue2[i], k[i].value, (sizeof(uint) * k[i].size), cudaMemcpyHostToDevice);
-		temp2.size = k[i].size;
-		temp2.value = tempvalue2[i];
-		cudaMemcpy((devk + i), &temp2, (sizeof(big)), cudaMemcpyHostToDevice);
-
-		big temp3a;
-		cudaMalloc((void**)&tempvalue3a[i], (sizeof(uint) * p->size * 2));
-		temp3a.value = tempvalue3a[i];
-		cudaMemcpy((devres + 2 * i), &temp3a, (sizeof(big)), cudaMemcpyHostToDevice);
-		
-		big temp3b;
-		cudaMalloc((void**)&tempvalue3b[i], (sizeof(uint) * p->size * 2));
-		temp3b.value = tempvalue3b[i];
-		cudaMemcpy((devres + 2 * i + 1), &temp3b, (sizeof(big)), cudaMemcpyHostToDevice);
-
-		big temp4;
-		cudaMalloc((void**)&tempvalue4[i], (sizeof(uint) * p->size * 2));
-		temp4.value = tempvalue4[i];
-		cudaMemcpy((minbuff + i), &temp4, (sizeof(big)), cudaMemcpyHostToDevice);
-
-		big temp5;
-		cudaMalloc((void**)&tempvalue5[i], (sizeof(uint) * p->size * 2));
-		temp5.value = tempvalue5[i];
-		cudaMemcpy((mulbuff + i), &temp5, (sizeof(big)), cudaMemcpyHostToDevice);
-	}
-
-	// size_t free_byte ;
- //    size_t total_byte ;
- //    cudaMemGetInfo( &free_byte, &total_byte ) ;
-	// double free_db = (double)free_byte ;
- //    double total_db = (double)total_byte ;
- //    double used_db = total_db - free_db ;
-
-
-	kernelenk << <dimensigrid, dimensiblok >> >(devm, devk, devg, devp, devy, devres);
-
-	cudaDeviceSynchronize();
-
-
-	//	COPY FROM DEVICE TO HOST HERE
-	big* tempres = (big*) malloc(banyakdata * 2 * sizeof(big)); 
-	for (int i = 0; i < banyakdata*2; i++){
-		tempres[i].value = (uint*) malloc(sizeof(uint) * p->size);
-	}
-	cudaMemcpy(tempres, devres, (sizeof(big) * 2 * banyakdata), cudaMemcpyDeviceToHost);
-
-	for (int i = 0; i < banyakdata*2; i++){
-		res[i].size = tempres[i].size;
-		cudaMemcpy(res[i].value, tempres[i].value, sizeof(uint) * p->size, cudaMemcpyDeviceToHost);
-	}
-
-	cudaFree(darrg);
-	cudaFree(darrp);
-	cudaFree(darry);
-	cudaFree(devg);
-	cudaFree(devp);
-	cudaFree(devy);
-
-	for (int i = 0; i < banyakdata; i++) {
-		cudaFree(tempvalue[i]);
-		cudaFree(tempvalue2[i]);
-		cudaFree(tempvalue3a[i]);
-		cudaFree(tempvalue3b[i]);
-		cudaFree(tempvalue4[i]);
-		cudaFree(tempvalue5[i]);
-	}
-
-	free(tempvalue);
-	free(tempvalue2);
-	free(tempvalue3a);
-	free(tempvalue3b);
-	free(tempvalue4);
-	free(tempvalue5);
-	cudaFree(devm);
-	cudaFree(devk);
-	cudaFree(devres);
-	cudaFree(minbuff);
-	cudaFree(mulbuff);
-
-	free(tempres);
-
-	//cudaProfilerStop();
-	//free(med);
-
-}
-
-void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y){
-	// printf("Encrypting...\n");
-	//========================================================//
-
-	cudaSetDevice(0);
-
-	CUDAenk(m, k, g, p, y, res);
-
-	cudaDeviceReset();
-
-	// for (int i = 0; i < 5; i++)
-	// {
-	// 	printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
-	// }
-	// printf("Cipher ... : ...\n");
-	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
-	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
 }
 
 void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
@@ -493,22 +240,144 @@ void carikunciy(big *g, big *x, big *p, big *y, uint *minbuff, big *mulbuff){
 	modexp(g,x,p,y,minbuff,mulbuff);
 }
 
-void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
-	// Kunci publik p
-	srand(2018);
+__global__ void kernelenk(uint *p, uint *g, uint *y, uint *m, uint *k, uint *resval, char *ressize, uint *buffmin, uint *buffmul){
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+	int jdx = threadIdx.x;
 
-	p->size = 4;
-	p->value = (uint*) malloc(p->size * sizeof(uint));
-	p->value[0] = UINT_MAX;
-	for (int i = 1; i < p->size; i++)
+	int sizebig = 4;
+	// int banyakdata = 256;
+
+	__shared__ big sm[128];
+	__shared__ big sk[128];
+	__shared__ big smulbuff[128];
+	__shared__ big sres[256];
+	__shared__ big sp;
+	__shared__ big sg;
+	__shared__ big sy;
+	__shared__ uint s[4200];
+
+	uint *spval = s;
+	uint *sgval = (uint*)&spval[sizebig];
+	uint *syval = (uint*)&sgval[sizebig];
+	uint *sresval = (uint*)&syval[sizebig];
+	uint *smulbuffval = (uint*)&sresval[2*sizebig*128*2];
+	//uint *sminbuffval = (uint*)&smulbuffval[2*sizebig*128];
+	//uint *sminbuffval = (uint*)&sresval[2*sizebig*128*2];
+	uint *smval = (uint*)&smulbuffval[2*sizebig*128];
+	uint *skval = (uint*)&smval[sizebig*128];
+
+	for (int i = 0; i < sizebig; i++)
 	{
+		spval[i] = p[i];
+		sgval[i] = g[i];
+		syval[i] = y[i];
+		smval[jdx*sizebig+i] = m[idx*sizebig + i];
+		skval[jdx*sizebig+i] = k[idx*sizebig + i];
+	}
+
+	sp.size = sizebig;
+	sg.size = sizebig;
+	sy.size = sizebig;
+	sm[jdx].size = sizebig;
+	sk[jdx].size = sizebig;
+
+	sp.value = spval;
+	sg.value = sgval;
+	sy.value = syval;
+	sm[jdx].value = (uint*)&smval[jdx*sizebig];
+	sk[jdx].value = (uint*)&skval[jdx*sizebig];
+	sres[2*jdx].value = (uint*)&sresval[jdx*sizebig*4];
+	sres[2*jdx+1].value = (uint*)&sresval[jdx*sizebig*4+sizebig*2];
+	smulbuff[jdx].value = (uint*)&smulbuffval[jdx*sizebig*2];
+	// sminbuff[jdx].value = (uint*)&sminbuffval[jdx*sizebig];
+
+	__syncthreads();
+
+	//uint* minbuff = (uint*) malloc(sizeof(uint) * sizebig);
+
+	enkripsi(sm + jdx, sk + jdx, &sg, &sp, &sy, sres + 2*jdx, buffmin + 2 *sizebig * idx, smulbuff + jdx);
+
+	ressize[2*idx] = sres[2*jdx].size;
+	ressize[2*idx + 1] = sres[2*jdx + 1].size;
+
+	for (int i = 0; i < sres[2*jdx].size; i++)
+	{
+		resval[2 * idx * sizebig * 2 + i] = sres[2*jdx].value[i];
+	}
+
+	for (int i = 0; i < sres[2*jdx+1].size; i++)
+	{
+		resval[(2 * idx + 1)* sizebig * 2 + i] = sres[2*jdx+1].value[i];
+	}
+}
+
+void CUDAenk(uint *p, uint *g, uint *y, uint *m, uint *k, uint *resval, char *ressize) {
+	
+	//=====================BAGIAN G, P, DAN Y ====================================//
+	char *devressize;
+	uint *devp, *devg, *devy, *devm, *devk, *devresval, *buffmin, *buffmul;
+
+	cudaMalloc((void**)&devp, sizebig * sizeof(uint));
+	cudaMalloc((void**)&devg, sizebig * sizeof(uint));
+	cudaMalloc((void**)&devy, sizebig * sizeof(uint));
+
+	cudaMalloc((void**)&devm, banyakdata * sizebig * sizeof(uint));
+	cudaMalloc((void**)&devk, banyakdata * sizebig * sizeof(uint));
+	cudaMalloc((void**)&devresval, 2 * banyakdata * 2 * sizebig * sizeof(uint));
+	
+	cudaMalloc((void**)&devressize, 2 * banyakdata * sizeof(char));
+
+	cudaMalloc((void**)&buffmin, banyakdata * sizebig * 2 * sizeof(uint));
+	cudaMalloc((void**)&buffmul, banyakdata * sizebig * 2 * sizeof(uint));
+
+	cudaMemcpy(devp, p, sizebig * sizeof(uint), cudaMemcpyHostToDevice);
+	cudaMemcpy(devg, g, sizebig * sizeof(uint), cudaMemcpyHostToDevice);
+	cudaMemcpy(devy, y, sizebig * sizeof(uint), cudaMemcpyHostToDevice);
+	
+	cudaMemcpy(devm, m, banyakdata * sizebig * sizeof(uint), cudaMemcpyHostToDevice);
+	cudaMemcpy(devk, k, banyakdata * sizebig * sizeof(uint), cudaMemcpyHostToDevice);
+
+		kernelenk << <dimensigrid, dimensiblok >> >(devp, devg, devy, devm, devk, devresval, devressize, buffmin, buffmul);
+
+	cudaDeviceSynchronize();
+
+	// COPY FROM DEVICE TO HOST HERE
+
+	cudaMemcpy(ressize, devressize, 2 * banyakdata, cudaMemcpyDeviceToHost);
+	cudaMemcpy(resval, devresval, 2 * banyakdata * 2 * sizebig * sizeof(uint), cudaMemcpyDeviceToHost);
+
+	cudaFree(devp);
+	cudaFree(devg);
+	cudaFree(devy);
+	cudaFree(devm);
+	cudaFree(devk);
+	cudaFree(devresval);
+	cudaFree(devressize);
+	cudaFree(buffmin);
+	cudaFree(buffmul);
+}
+
+void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
+	srand(2018);
+	big *p, *g, *x, *y;
+
+	p = (big*)malloc(sizeof(big));
+	g = (big*)malloc(sizeof(big));
+	x = (big*)malloc(sizeof(big));
+	y = (big*)malloc(sizeof(big));
+
+	p->size = sizebig;
+	p->value = pval;
+	p->value[0] = UINT_MAX;
+	for (int i = 0; i < p->size; i++)
+	{
+		//p->value[i] = 2357;
 		p->value[i] = rand() % UINT_MAX;
 	}
 
-
 	// Kunci publik g
-	g->size = 4;
-	g->value = (uint*) malloc(g->size * sizeof(uint));
+	g->size = sizebig;
+	g->value = gval;
 	for (int i = 0; i < g->size; i++)
 	{
 		// g->value[i] = 2;
@@ -516,7 +385,7 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 	}
 
 	// Kunci privat x
-	x->size = 4;
+	x->size = sizebig;
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
@@ -524,86 +393,69 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res){
 		x->value[i] = rand() % UINT_MAX;
 	}
 
-	// Cari nilai eksponen e = (p-x-1) untuk dekripsi
-	big *xplus1 = (big*) malloc(sizeof(big));
-	xplus1->value = (uint*) malloc(p->size * sizeof(uint));
-	e->value = (uint*) malloc(p->size * sizeof(uint));
-
-	tambah(x, 1, xplus1);
-	kurang(p,xplus1,e);
-
-	free(xplus1->value);
-	free(xplus1);
-
 	// Cari nilai kunci publik y = (g^x) mod p
 	big* mulbuff = (big*) malloc(sizeof(big));
-	mulbuff->value = (uint*) malloc(sizeof(uint) * p->size * 2);
-	uint* minbuff = (uint*) malloc(sizeof(uint) * p->size * 2);
+	mulbuff->value = (uint*) malloc(sizeof(uint) * sizebig * 2);
+	uint* minbuff = (uint*) malloc(sizeof(uint) * sizebig * 2);
 
-	y->value = (uint*) malloc(p->size * 2 * sizeof(uint));
+	y->value = (uint*) malloc(sizeof(uint) * sizebig * 2);
 	carikunciy(g,x,p,y,minbuff,mulbuff);
 
-	// printf("y 0 : %u\n", y->value[0]);
-	// printf("y 0 : %u\n", y->value[1]);
-
-	//========================================================//
-	// Blok plainteks
-	for(int i = 0 ; i < banyakdata ; i++){
-		m[i].size = 4;
-		m[i].value = (uint*) malloc(m[i].size * sizeof(uint));
-		for (int j = 0; j < m[i].size; j++)
-		{
-			m[i].value[j] = rand() % UINT_MAX;
-		}
-
-		// Nilai k masing-masing blok
-		k[i].size = 4;
-		k[i].value = (uint*) malloc(k[i].size * sizeof(uint));
-		for (int j = 0; j < k[i].size; j++)
-		{
-			// k[i].value[j] = 77;
-			k[i].value[j] = rand() % UINT_MAX;
-		}
+	for (int i = 0; i < sizebig; i++)
+	{
+		yval[i] = y->value[i];
 	}
 
-	// Alokasi memori untuk result
-	for (int i = 0; i < banyakdata*2; i++)
-	{
-		res[i].value = (uint*) malloc(sizeof(uint) * p->size);
+	// printf("y size %d : %u\n", y->size, y->value[0]);
+
+	//========================================================//
+	// Blok plainteks dan k
+
+	for(int i = 0 ; i < banyakdata * sizebig ; i++){
+		// mval[i] = 1001;
+		mval[i] = rand() % UINT_MAX;
+		// kval[i] = 77;
+		kval[i] = rand() % UINT_MAX;
 	}
 }
 
 int main(){
-	big *p, *g, *x, *e, *y, *m, *k, *res;
-	p = (big*)malloc(sizeof(big));
-	g = (big*)malloc(sizeof(big));
-	x = (big*)malloc(sizeof(big));
-	e = (big*)malloc(sizeof(big));
-	y = (big*)malloc(sizeof(big));
-	m = (big*)malloc(banyakdata * sizeof(big));
-	k = (big*)malloc(banyakdata * sizeof(big));
-	res = (big*)malloc(banyakdata * 2 * sizeof(big));
+	char *ressize;
+	uint *p, *g, *y, *m, *k, *resval;
 
-	init(p,g,x,e,y,m,k,res);
-	mainenkripsi(m,k,res,g,p,y);
+	p = (uint*) malloc(sizebig * sizeof(uint));
+	g = (uint*) malloc(sizebig * sizeof(uint));
+	y = (uint*) malloc(sizebig * sizeof(uint));
 
-	free(p->value);
+	m = (uint*) malloc(banyakdata * sizebig * sizeof(uint));
+	k = (uint*) malloc(banyakdata * sizebig * sizeof(uint));
+	resval = (uint*) malloc(2 * banyakdata * 2 * sizebig * sizeof(uint));
+	ressize = (char*) malloc(2 * banyakdata * sizeof(char));
+
+	init(p,g,y,m,k);
+
+	// printf("Encrypting...\n");
+	//========================================================//
+
+	CUDAenk(p,g,y,m,k,resval,ressize);
+
+	// for (int i = 0; i < 5; i++)
+	// {
+	// 	printf("Cipher %d  size %d : %u\n",i, ressize[i], resval[i*2*sizebig]);
+	// }
+	// printf("Cipher ... : ...\n");
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, ressize[banyakdata*2-2], resval[(banyakdata*2-2) * 2 * sizebig]);
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, ressize[banyakdata*2-1], resval[(banyakdata*2-1) * 2 * sizebig]);
+
+
 	free(p);
-	free(g->value);
 	free(g);
-	free(x->value);
-	free(x);
-	free(e->value);
-	free(e);
-	free(y->value);
 	free(y);
-	free(m->value);
 	free(m);
-	free(k->value);
 	free(k);
-	free(res->value);
-	free(res);
-
+	free(resval);
+	free(ressize);
+	
 	return 0;
 }
 
