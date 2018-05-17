@@ -9,8 +9,8 @@ typedef unsigned long long ul;
 typedef unsigned int uint;
 
 
-int banyakdata = 2560;
-int dimensigrid = 200;
+int banyakdata = 40960;
+int dimensigrid = 320;
 int dimensiblok = 128;
 int sizebig = 2;
 
@@ -368,11 +368,11 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 
 	p->size = sizebig;
 	p->value = pval;
-	//p->value[0] = UINT_MAX;
+	p->value[0] = UINT_MAX;
 	for (int i = 0; i < p->size; i++)
 	{
-		p->value[i] = 2357;
-		//p->value[i] = rand() % UINT_MAX;
+		//p->value[i] = 2357;
+		p->value[i] = rand() % UINT_MAX;
 	}
 
 	// Kunci publik g
@@ -380,8 +380,8 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	g->value = gval;
 	for (int i = 0; i < g->size; i++)
 	{
-		g->value[i] = 2;
-		// g->value[i] = rand() % UINT_MAX;
+		// g->value[i] = 2;
+		g->value[i] = rand() % UINT_MAX;
 	}
 
 	// Kunci privat x
@@ -389,8 +389,8 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	x->value = (uint*) malloc(x->size * sizeof(uint));
 	for (int i = 0; i < x->size; i++)
 	{
-		x->value[i] = 1751;
-		// x->value[i] = rand() % UINT_MAX;
+		// x->value[i] = 1751;
+		x->value[i] = rand() % UINT_MAX;
 	}
 
 	// Cari nilai kunci publik y = (g^x) mod p
@@ -407,8 +407,10 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	// Blok plainteks dan k
 
 	for(int i = 0 ; i < banyakdata * sizebig ; i++){
-		mval[i] = 1001;
-		kval[i] = 77;
+		// mval[i] = 1001;
+		mval[i] = rand() % UINT_MAX;
+		// kval[i] = 77;
+		kval[i] = rand() % UINT_MAX;
 	}
 }
 
