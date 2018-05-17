@@ -401,7 +401,7 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	y->value = yval;
 	carikunciy(g,x,p,y,minbuff,mulbuff);
 
-	printf("y size %d : %u\n", y->size, y->value[0]);
+	// printf("y size %d : %u\n", y->size, y->value[0]);
 
 	//========================================================//
 	// Blok plainteks dan k
@@ -434,13 +434,13 @@ int main(){
 
 	CUDAenk(p,g,y,m,k,resval,ressize);
 
-	for (int i = 0; i < 5; i++)
-	{
-		printf("Cipher %d  size %d : %u\n",i, ressize[i], resval[i*2*sizebig]);
-	}
-	printf("Cipher ... : ...\n");
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-2, ressize[banyakdata*2-2], resval[(banyakdata*2-2) * 2 * sizebig]);
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-1, ressize[banyakdata*2-1], resval[(banyakdata*2-1) * 2 * sizebig]);
+	// for (int i = 0; i < 5; i++)
+	// {
+	// 	printf("Cipher %d  size %d : %u\n",i, ressize[i], resval[i*2*sizebig]);
+	// }
+	// printf("Cipher ... : ...\n");
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, ressize[banyakdata*2-2], resval[(banyakdata*2-2) * 2 * sizebig]);
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, ressize[banyakdata*2-1], resval[(banyakdata*2-1) * 2 * sizebig]);
 
 
 	free(p);
