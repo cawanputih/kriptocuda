@@ -8,8 +8,8 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-int banyakdata = 25600;
-int dimensigrid = 200;
+int banyakdata = 2560;
+int dimensigrid = 20;
 int dimensiblok = 128;
 
 typedef struct {
@@ -33,7 +33,7 @@ __device__ void enkripsi(big *m, big *k, big *g, big *p, big *y, big *res, big *
 __device__ void dekripsi(big *c1, big *c2, big *e, big *p, big *res, big *minbuff, big *mulbuff);
 __global__ void kernelenk(big *m, big *k, big *g, big *p, big *y, big *res, big *minbuff, big *mulbuff);
 __global__ void kerneldek(big *c, big *e, big *p, big *res, big *minbuff, big *mulbuff);
-cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res);
+void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res);
 cudaError_t CUDAdek(big *c, big *e, big* p, big *res);
 void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y);
 void maindekripsi(big* c,big* x,big* p,big* res2);
@@ -74,8 +74,8 @@ __global__ void kerneldek(big *c, big *e, big *p, big *res, big *minbuff, big *m
 	dekripsi(c + 2*i, c + 2*i+1, e, p, res+i, minbuff+i, mulbuff+i);
 }
 
-cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
-	cudaError_t cudaStatus;
+void CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
+
 	cudaSetDevice(0);
 	//=====================BAGIAN G, P, DAN Y ====================================//
 	big *devg, *devp, *devy;
@@ -166,31 +166,10 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
  //    double total_db = (double)total_byte ;
  //    double used_db = total_db - free_db ;
 
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-
-	cudaEventRecord(start);
 
 	kernelenk << <dimensigrid, dimensiblok >> >(devm, devk, devg, devp, devy, devres, minbuff, mulbuff);
 
-	cudaStatus = cudaGetLastError();
-	cudaEventRecord(stop);
-
-	cudaEventSynchronize(stop);
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
-	printf("Durasi = %f milidetik\n", milliseconds);
-	// printf("GPU Memory: used = %f, free = %f MB, total = %f MB\n",used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-	}
-	else {
-		// printf("Success\n");
-	}
-
 	cudaDeviceSynchronize();
-
 
 	//	COPY FROM DEVICE TO HOST HERE
 	big* tempres = (big*) malloc(banyakdata * 2 * sizeof(big)); 
@@ -234,10 +213,6 @@ cudaError_t CUDAenk(big *m, big *k, big* g, big* p, big* y, big *res) {
 
 	free(tempres);
 
-	//cudaProfilerStop();
-	//free(med);
-
-	return cudaStatus;
 }
 
 cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
@@ -387,25 +362,17 @@ cudaError_t CUDAdek(big *c, big *e, big* p, big *res) {
 }
 
 void mainenkripsi(big *m, big *k, big *res, big *g, big *p, big *y){
-	printf("Encrypting...\n");
+	// printf("Encrypting...\n");
 	//========================================================//
-	cudaError_t cudaStatus = CUDAenk(m, k, g, p, y, res);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "\nenkripsiCUDA failed!");
-	}
+	CUDAenk(m, k, g, p, y, res);
 
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaDeviceReset failed!");
-	}
-
-	for (int i = 0; i < 5; i++)
-	{
-		printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
-	}
-	printf("Cipher ... : ...\n");
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
-	printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
+	// for (int i = 0; i < 5; i++)
+	// {
+	// 	printf("Cipher %d  size %d : %u\n",i, res[i].size, res[i].value[0]);
+	// }
+	// printf("Cipher ... : ...\n");
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-2, res[banyakdata*2-2].size, res[banyakdata*2-2].value[0]);
+	// printf("Cipher %d  size %d : %u\n",banyakdata*2-1, res[banyakdata*2-2].size, res[banyakdata*2-1].value[0]);
 }
 
 void maindekripsi(big* c,big* e,big* p,big* res2){
@@ -486,9 +453,9 @@ void init(big *p, big *g, big *x, big*e, big *y, big *m, big *k, big *res, big *
 
 	y->value = (uint*) malloc(p->size * 2 * sizeof(uint));
 	carikunciy(g,x,p,y,minbuff,mulbuff);
-	printf("y 0 : %u\n", y->value[0]);
-	printf("y 0 : %u\n", y->value[1]);
-	//========================================================//
+	// printf("y 0 : %u\n", y->value[0]);
+	// printf("y 0 : %u\n", y->value[1]);
+	// //========================================================//
 	// Blok plainteks
 	m->size = 2;
 	m->value = (uint*) malloc(m->size * sizeof(uint));
@@ -534,8 +501,8 @@ int main(){
 
 	init(p,g,x,e,y,m,k,res,res2);
 	mainenkripsi(m,k,res,g,p,y);
-	printf("			=========================			\n");
-	maindekripsi(res,e,p,res2);
+	// printf("			=========================			\n");
+	// maindekripsi(res,e,p,res2);
 
 
 	free(p->value);
