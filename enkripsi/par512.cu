@@ -8,10 +8,9 @@
 typedef unsigned long long ul;
 typedef unsigned int uint;
 
-
 int banyakdata = 320;
 int dimensigrid = 5;
-int dimensiblok = 64;
+int dimensiblok = 32;
 int sizebig = 16;
 
 typedef struct {
@@ -247,24 +246,24 @@ __global__ void kernelenk(uint *p, uint *g, uint *y, uint *m, uint *k, uint *res
 	int sizebig = 16;
 	// int banyakdata = 256;
 
-	__shared__ big sm[64];
-	__shared__ big sk[64];
-	__shared__ big smulbuff[64];
-	__shared__ big sres[128];
+	__shared__ big sm[32];
+	__shared__ big sk[32];
+	__shared__ big smulbuff[32];
+	__shared__ big sres[64];
 	__shared__ big sp;
 	__shared__ big sg;
 	__shared__ big sy;
-	__shared__ uint s[8400];
+	__shared__ uint s[4200];
 
 	uint *spval = s;
 	uint *sgval = (uint*)&spval[sizebig];
 	uint *syval = (uint*)&sgval[sizebig];
 	uint *sresval = (uint*)&syval[sizebig];
-	uint *smulbuffval = (uint*)&sresval[2*sizebig*64*2];
+	uint *smulbuffval = (uint*)&sresval[2*sizebig*32*2];
 	//uint *sminbuffval = (uint*)&smulbuffval[2*sizebig*128];
 	//uint *sminbuffval = (uint*)&sresval[2*sizebig*128*2];
-	uint *smval = (uint*)&smulbuffval[2*sizebig*64];
-	uint *skval = (uint*)&smval[sizebig*64];
+	uint *smval = (uint*)&smulbuffval[2*sizebig*32];
+	uint *skval = (uint*)&smval[sizebig*32];
 
 	for (int i = 0; i < sizebig; i++)
 	{
