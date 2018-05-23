@@ -398,9 +398,12 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	mulbuff->value = (uint*) malloc(sizeof(uint) * p->size * 2);
 	uint* minbuff = (uint*) malloc(sizeof(uint) * p->size * 2);
 
-	y->value = yval;
+	y->value = (uint*) malloc(sizeof(uint) * sizebig * 2);
 	carikunciy(g,x,p,y,minbuff,mulbuff);
-
+	for (int i = 0; i < sizebig; i++)
+	{
+		yval[i] = y->value[i];
+	}
 	// printf("y size %d : %u\n", y->size, y->value[0]);
 
 	//========================================================//
