@@ -6,111 +6,91 @@
 #include <time.h>
 #include <math.h>
 
-typedef unsigned char ulint;
-typedef unsigned int ulint64;
 
-int banyakdata = 335544320;
-int dimensigrid = 327680;
-int dimensiblok = 1024;
+int banyakdata = 1;
+int dimensigrid = 1;
+int dimensiblok = 1;
 
-__host__ __device__ void modexp(ulint a, ulint b, ulint c, ulint* res) {
-	ulint64 s = a;
-	ulint64 ans = 1;
-	while (b != 0) {
-		if (b % 2 == 1) {
-			ans = ans * s % c;
-			b--;
-		}
-		b /= 2;
-		if (b != 0) {
-			s = s * s %c;
+
+__global__ void kernelenk(int *res) {
+	int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+	int temp = 0;
+	for (int i = 0; i < 1000; i++)
+	{
+		for (int j = 0; j < 1000; j++)
+		{
+			int kali = 1+j+i;
+			temp += kali;
 		}
 	}
-	*res = ans;
+	res[idx] = temp;
 }
 
-__device__ void enkripsi(ulint g, ulint k, ulint p, ulint m, ulint y, ulint *res) {
-	modexp(g, k, p, res);
-	modexp(y, k, p, res + 1);
+void fserial(int *res) {
+	for (int kk = 0; kk < banyakdata; ++kk)
+	{
+		int temp = 0;
+		for (int i = 0; i < 1000; i++)
+		{
+			for (int j = 0; j < 1000; j++)
+			{
+				int kali = 1+j+i;
+				temp += kali;
+			}
+		}
+		res[kk] = temp;
+	}
 	
-	*(res + 1) = *(res + 1) * m % p;
 }
 
-__device__ void dekripsi(ulint a, ulint b, ulint p, ulint e, ulint *res) {
-	modexp(a, e, p, res);
-	*res = *res * b % p;
+int serial(){
+	int *res;
+	res = (int*) malloc(sizeof(int) * banyakdata);
+
+	clock_t begin = clock();
+		fserial(res);
+	clock_t end = clock();
+
+	double time_spent = (double)(end - begin);
+	printf("Durasi enkripsi = %f milliseconds\n", time_spent / 1000);
+
+	for (int i = 0; i < 5; i++)
+	{
+		printf("Res %d : %d\n",i,res[i]);
+	}
+		printf("Res %d : %d\n",banyakdata-1,res[banyakdata-1]);
+
+
+	free(res);
+
 }
 
-__global__ void kernelenk(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
-	int i = blockIdx.x*blockDim.x + threadIdx.x;
-	enkripsi(g, k[i], p, m[i], y, res + 2 * i);
-}
+int paralel(){
+	int *res, *devres;
+	res = (int*) malloc(sizeof(int) * banyakdata);
 
-__global__ void kerneldek(ulint *c, ulint p, ulint e, ulint *res) {
-	int i = blockIdx.x*blockDim.x + threadIdx.x;
-	dekripsi(c[2*i], c[2*i+1], p, e, res + i);
-}
-
-void enkripsiCUDA(ulint *m, ulint *k, ulint g, ulint p, ulint y, ulint *res) {
-	//=====================BAGIAN M[] K[] DAN RES[] ====================================//
-	ulint *devm, *devk, *devres;
+	cudaMalloc((void**)&devres,sizeof(int) * banyakdata);
 	
-	cudaMalloc((void**)&devm, banyakdata * sizeof(ulint));
-	cudaMalloc((void**)&devk, banyakdata * sizeof(ulint));
-	cudaMalloc((void**)&devres, banyakdata * 2 * sizeof(ulint));
+	kernelenk<<<dimensigrid,dimensiblok>>>(devres);
 	
-	cudaMemcpy((devm), m, (sizeof(ulint) * banyakdata), cudaMemcpyHostToDevice);
-	cudaMemcpy((devk), k, (sizeof(ulint) * banyakdata), cudaMemcpyHostToDevice);	
-
-	kernelenk << <dimensigrid, dimensiblok>> >(devm,devk,g,p,y,devres);
-
 	cudaDeviceSynchronize();
 
-	//	COPY FROM DEVICE TO HOST HERE 
-	cudaMemcpy(res, devres, (sizeof(ulint) * 2 * banyakdata), cudaMemcpyDeviceToHost);
+	cudaMemcpy(res, devres, sizeof(int) * banyakdata, cudaMemcpyDeviceToHost);
+
+	for (int i = 0; i < 5; i++)
+	{
+		printf("Res %d : %d\n",i,res[i]);
+	}
+		printf("Res %d : %d\n",banyakdata-1,res[banyakdata-1]);
 	
-	cudaFree(devm);
-	cudaFree(devk);
 	cudaFree(devres);
-}
-
-void initenkripsi(ulint *m, ulint *k){
-	
-	for (int i = 0; i < banyakdata; i++) {
-		m[i] = rand() % 250;
-		k[i] = rand() % 250;
-	}	
-}
-
-int main(){
-	ulint *m, *k, *res, g, p, y, x;
-
-	m = (ulint*)malloc(banyakdata * sizeof(ulint));
-	k = (ulint*)malloc(banyakdata * sizeof(ulint));
-	res = (ulint*)malloc(banyakdata * 2 * sizeof(ulint));
-
-	srand(2018);
-
-	g = rand() % 250;
-	p = 251;
-	x = rand() % 250;
-	modexp(g,x,p,&y);
-	initenkripsi(m, k);
-
-	enkripsiCUDA(m,k,g,p,y,res);
-
-
-	// printf("<<<<<<<<<<<<<<Hasil Enkripsi>>>>>>>>>>>>>>>\n");
-	// for (int i = 0; i < 4; i++) {
-	// 	printf("c[%d] = %d 	c[%d] = %d\n", 2*i, res[2*i], 2*i+1, res[2*i+1]);
-	// }
-
-	// printf("c ...\n");
-	// printf("c[%d] = %d 	c[%d] = %d\n", banyakdata * 2-2, res[banyakdata * 2-2], banyakdata *2-1,res[banyakdata*2-1]);
-
-	free(m);
-	free(k);
 	free(res);
 
 	return 0;
+}
+
+int main(){
+	// serial();
+	paralel();
 }
