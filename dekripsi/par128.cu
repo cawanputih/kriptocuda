@@ -12,7 +12,7 @@ typedef unsigned int uint;
 int banyakdata = 640;
 int dimensigrid = 5;
 int dimensiblok = 128;
-int sizebig = 2;
+int sizebig = 4;
 
 typedef struct {
 	char size;
@@ -236,7 +236,7 @@ __global__ void kerneldek(uint *p, uint *e, uint *c, uint *resval, char *ressize
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 	int jdx = threadIdx.x;
 
-	int sizebig = 2;
+	int sizebig = 4;
 	// int banyakdata = 256;
 
 	__shared__ big sa[128];
@@ -245,7 +245,7 @@ __global__ void kerneldek(uint *p, uint *e, uint *c, uint *resval, char *ressize
 	__shared__ big sres[256];
 	__shared__ big sp;
 	__shared__ big se;
-	__shared__ uint s[1600];
+	__shared__ uint s[3200];
 
 	uint *spval = s;
 	uint *seval = (uint*)&spval[sizebig];
