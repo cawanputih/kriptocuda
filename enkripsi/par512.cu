@@ -254,7 +254,7 @@ __global__ void kernelenk(uint *p, uint *g, uint *y, uint *m, uint *k, uint *res
 	__shared__ big sp;
 	__shared__ big sg;
 	__shared__ big sy;
-	__shared__ uint s[2400];
+	__shared__ uint s[8400];
 
 	uint *spval = s;
 	uint *sgval = (uint*)&spval[sizebig];
@@ -369,7 +369,7 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	p->size = sizebig;
 	p->value = pval;
 	p->value[0] = UINT_MAX;
-	for (int i = 0; i < p->size; i++)
+	for (int i = 1; i < p->size; i++)
 	{
 		//p->value[i] = 2357;
 		p->value[i] = rand() % UINT_MAX;
@@ -417,6 +417,13 @@ void init(uint *pval, uint *gval, uint *yval, uint *mval, uint *kval){
 	}
 }
 
+void printbig(uint* val){
+	for (int i = 0; i < 16; i++)
+	{
+		printf("val i = %u\n", val[i]);
+	}
+}
+
 int main(){
 	char *ressize;
 	uint *p, *g, *y, *m, *k, *resval;
@@ -431,7 +438,7 @@ int main(){
 	ressize = (char*) malloc(2 * banyakdata * sizeof(char));
 
 	init(p,g,y,m,k);
-
+	
 	// printf("Encrypting...\n");
 	//========================================================//
 
